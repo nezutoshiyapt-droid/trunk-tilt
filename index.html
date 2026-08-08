@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0f1720">
+<title>体幹傾斜・恐怖感測定 (Trunk Tilt & FoF)</title>
+<style>
+  :root{
+    --bg:#0f1720; --panel:#18232f; --panel2:#20303f; --line:#2c3f52;
+    --fg:#eaf2f8; --sub:#9db3c7; --acc:#38bdf8; --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--fg);
+    font-family:-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;}
+  body{padding:10px 10px calc(20px + env(safe-area-inset-bottom));font-size:16px;line-height:1.45}
+  h1{font-size:19px;margin:4px 0 12px}
+  h2{font-size:16px;margin:18px 0 8px;color:var(--acc);border-left:4px solid var(--acc);padding-left:8px}
+  .screen{display:none}
+  .screen.on{display:block}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
+  label{display:block;font-size:13px;color:var(--sub);margin:10px 0 4px}
+  input[type=text],input[type=number],select,textarea{
+    width:100%;padding:11px;font-size:16px;background:var(--panel2);color:var(--fg);
+    border:1px solid var(--line);border-radius:8px}
+  textarea{min-height:60px;resize:vertical}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  .row>*{flex:1;min-width:0}
+  button{font-family:inherit;font-size:16px;font-weight:700;padding:14px 10px;border:none;border-radius:10px;
+    background:var(--panel2);color:var(--fg);border:1px solid var(--line);width:100%;cursor:pointer}
+  button.primary{background:var(--acc);color:#04202c;border-color:var(--acc)}
+  button.ok{background:var(--ok);color:#04220f;border-color:var(--ok)}
+  button.bad{background:var(--bad);color:#2a0505;border-color:var(--bad)}
+  button.warn{background:var(--warn);color:#2b1a00;border-color:var(--warn)}
+  button:disabled{opacity:.35}
+  button.big{font-size:22px;padding:22px 10px}
+  .muted{color:var(--sub);font-size:13px}
+  .tiny{font-size:12px;color:var(--sub)}
+  .kv{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dashed var(--line);font-size:14px}
+  .kv b{font-variant-numeric:tabular-nums}
+  .bignum{font-size:64px;font-weight:800;text-align:center;font-variant-numeric:tabular-nums;line-height:1.05;letter-spacing:-2px}
+  .unit{font-size:22px;font-weight:600;color:var(--sub)}
+  .gauge{position:relative;height:34px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:6px 0}
+  .gauge .zone{position:absolute;top:0;bottom:0;background:rgba(34,197,94,.28)}
+  .gauge .zero{position:absolute;top:0;bottom:0;width:2px;left:50%;background:var(--sub)}
+  .gauge .mark{position:absolute;top:2px;bottom:2px;width:6px;border-radius:3px;background:var(--acc);margin-left:-3px}
+  .gauge .tgt{position:absolute;top:0;bottom:0;width:2px;background:var(--warn)}
+  .badge{display:inline-block;padding:3px 9px;border-radius:99px;font-size:12px;font-weight:700;
+    background:var(--panel2);border:1px solid var(--line);color:var(--sub);margin-right:5px}
+  .badge.on{background:var(--ok);color:#04220f;border-color:var(--ok)}
+  .badge.no{background:var(--bad);color:#fff;border-color:var(--bad)}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th,td{border:1px solid var(--line);padding:5px 4px;text-align:center;font-variant-numeric:tabular-nums}
+  th{background:var(--panel2);color:var(--sub);font-weight:600}
+  .nrsgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;margin-top:8px}
+  .nrsgrid button{padding:18px 0;font-size:21px}
+  .nrsgrid button.sel{background:var(--acc);color:#04202c;border-color:var(--acc)}
+  .condlist{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  .condlist button{padding:12px 6px;font-size:14px;position:relative}
+  .condlist button.done{background:#14361f;border-color:var(--ok);color:#9ef0b6}
+  .condlist button.cur{outline:3px solid var(--acc)}
+  video{width:100%;border-radius:10px;background:#000;margin-top:8px}
+  .banner{padding:10px;border-radius:9px;margin-bottom:10px;font-size:14px;font-weight:600}
+  .banner.err{background:#3b1114;border:1px solid var(--bad);color:#ffc9cc}
+  .banner.info{background:#0c2b3a;border:1px solid var(--acc);color:#bfe9ff}
+  .banner.warn{background:#3a2a08;border:1px solid var(--warn);color:#ffe0a3}
+  a.dl{display:block;text-align:center;padding:13px;background:var(--panel2);border:1px solid var(--acc);
+    border-radius:10px;color:var(--acc);text-decoration:none;font-weight:700;margin-bottom:8px}
+  hr{border:none;border-top:1px solid var(--line);margin:14px 0}
+  .phase{text-align:center;font-size:15px;font-weight:700;padding:7px;border-radius:8px;background:var(--panel2);margin-bottom:8px}
+  .toggle{display:flex;align-items:center;gap:9px;margin:9px 0;font-size:14px}
+  .toggle input{width:24px;height:24px;flex:0 0 auto}
+  .laplist{max-height:150px;overflow-y:auto;font-size:12px;font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+
+<!-- ============ 1. 設定 ============ -->
+<div id="scSetup" class="screen on">
+  <h1>体幹傾斜・恐怖感測定アプリ</h1>
+  <div id="compat"></div>
+
+  <div class="card">
+    <h2>被検者情報</h2>
+    <label>被検者ID</label><input type="text" id="subjId" placeholder="例: P001">
+    <label>検者名</label><input type="text" id="examiner" placeholder="例: 根津">
+    <label>メモ（診断名・病期など）</label><textarea id="memo"></textarea>
+  </div>
+
+  <div class="card">
+    <h2>測定オプション</h2>
+    <div class="toggle"><input type="checkbox" id="optVideo" checked><span>試行ごとに動画を録画する（前面カメラ・音声あり）</span></div>
+    <div class="toggle"><input type="checkbox" id="optVoice" checked><span>音声ガイド（条件名を読み上げ→動画に記録される）</span></div>
+    <div class="toggle"><input type="checkbox" id="optBeep" checked><span>イベント時にビープ音（動画・外部カメラとの同期用）</span></div>
+    <div class="toggle"><input type="checkbox" id="optAuto" checked><span>傾斜の開始／到達／終了を自動検出</span></div>
+    <div class="toggle"><input type="checkbox" id="optRandom"><span>条件の提示順をランダム化</span></div>
+
+    <label>目標角速度（deg/s）— この速度帯で傾けると緑になります</label>
+    <div class="row">
+      <div><input type="number" id="velLo" value="3" step="0.5"><div class="tiny">下限</div></div>
+      <div><input type="number" id="velHi" value="8" step="0.5"><div class="tiny">上限</div></div>
+    </div>
+    <label>保持時間の目安（秒）</label><input type="number" id="holdSec" value="5" step="1">
+    <div class="tiny" style="margin-top:8px">※角速度が上限を超えると赤表示＋警告音。加速度差による恐怖感の混入を抑えます。</div>
+  </div>
+
+  <div class="card">
+    <button class="primary big" id="btnStart">センサーを許可して次へ</button>
+    <div class="tiny" style="margin-top:8px">iPhoneではモーションセンサー・カメラ・マイクの許可が求められます。すべて「許可」を選んでください。</div>
+  </div>
+</div>
+
+<!-- ============ 2. 装着チェック ============ -->
+<div id="scCheck" class="screen">
+  <h1>装着・センサー確認</h1>
+  <div class="card">
+    <div class="banner info">ハーネスで胸骨前面にスマホを固定してください。<b>画面を前（外向き）に、本体の上端を頭側</b>にします。</div>
+    <div class="phase" id="chkPhase">STEP 1 — 端末の向きを合わせる</div>
+    <div class="row">
+      <div>
+        <div class="tiny" style="text-align:center">矢状面（前傾＋／後傾−）</div>
+        <div class="bignum" id="chkPitch" style="font-size:44px">0.0<span class="unit">°</span></div>
+      </div>
+      <div>
+        <div class="tiny" style="text-align:center">前額面（右＋／左−）</div>
+        <div class="bignum" id="chkRoll" style="font-size:44px">0.0<span class="unit">°</span></div>
+      </div>
+    </div>
+    <div class="kv"><span>角速度（矢状／前額）</span><b id="chkRate">0.0 / 0.0 deg/s</b></div>
+    <div class="kv"><span>合成直線加速度</span><b id="chkAcc">0.00 m/s²</b></div>
+    <div class="kv"><span>サンプリング</span><b id="chkHz">-- Hz</b></div>
+  </div>
+
+  <div class="card">
+    <h2>STEP 1: 基準の自動設定</h2>
+    <div class="muted">被検者に楽な座位でまっすぐ座ってもらい、下のボタンを押します。重力（鉛直）を0°とする絶対角の符号と装着オフセットを確認します。</div>
+    <button class="primary" id="btnZeroCheck" style="margin-top:10px">直立座位で押す（基準確認）</button>
+    <div id="zeroInfo" class="tiny" style="margin-top:8px"></div>
+  </div>
+
+  <div class="card">
+    <h2>STEP 2: 方向の確認</h2>
+    <div class="muted">実際にゆっくり前に傾けて「前傾＋」、右に傾けて「右＋」になるか確認してください。逆なら下のボタンで反転します。</div>
+    <div class="row" style="margin-top:10px">
+      <button id="btnFlipP">矢状面 符号反転</button>
+      <button id="btnFlipR">前額面 符号反転</button>
+    </div>
+    <div class="tiny" style="margin-top:6px">現在: 矢状 <span id="signP">+1</span> / 前額 <span id="signR">-1</span></div>
+  </div>
+
+  <div class="card">
+    <h2>STEP 3: ジャイロ較正（推奨）</h2>
+    <div class="muted">下のボタンを押してから約5秒間、前後・左右へゆっくり数回傾けてください。ジャイロの符号を自動判定し、角度推定の精度を上げます。</div>
+    <button id="btnGyroCal" style="margin-top:10px">ジャイロ較正を開始（5秒）</button>
+    <div id="gyroInfo" class="tiny" style="margin-top:8px">未較正（加速度センサーのみで推定中）</div>
+  </div>
+
+  <div class="card">
+    <button class="ok big" id="btnToMeasure">測定を開始する</button>
+  </div>
+</div>
+
+<!-- ============ 3. 測定 ============ -->
+<div id="scMeasure" class="screen">
+  <div class="card" style="padding:9px 12px">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div><b id="mCondName">条件を選択</b><div class="tiny" id="mProgress"></div></div>
+      <div style="text-align:right"><span class="badge" id="mRec">●REC</span><div class="tiny" id="mClock">0.0 s</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="phase" id="mPhase">条件を選んで「試行開始」</div>
+    <div class="bignum" id="mAngle">0.0<span class="unit">°</span></div>
+    <div class="gauge" id="gAngle"><div class="zone" id="gZone"></div><div class="zero"></div><div class="tgt" id="gTgt"></div><div class="mark" id="gMark" style="left:50%"></div></div>
+    <div class="tiny" style="display:flex;justify-content:space-between"><span id="gMin">-40°</span><span>目標 <b id="mTarget">--</b></span><span id="gMax">+40°</span></div>
+
+    <div style="margin-top:12px">
+      <div style="display:flex;justify-content:space-between;font-size:13px">
+        <span class="muted">傾斜速度</span><b id="mVel" style="font-size:20px">0.0 deg/s</b>
+      </div>
+      <div class="gauge" style="height:26px"><div class="zone" id="vZone"></div><div class="mark" id="vMark" style="left:0%"></div></div>
+      <div class="tiny" id="vMsg">ゆっくり一定の速度で傾けてください</div>
+    </div>
+
+    <div class="row" style="margin-top:6px">
+      <div class="kv" style="flex:1"><span>最大角</span><b id="mPeakA">0.0°</b></div>
+      <div class="kv" style="flex:1"><span>最大速度</span><b id="mPeakV">0.0</b></div>
+      <div class="kv" style="flex:1"><span>最大加速度</span><b id="mPeakAcc">0.00</b></div>
+    </div>
+  </div>
+
+  <div class="card" id="condCard">
+    <h2>条件を選択</h2>
+    <div class="condlist" id="condList"></div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <button class="primary big" id="btnTrial">試行開始</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button class="warn" id="btnLap" disabled>ラップ / 時点記録</button>
+      <button id="btnMarkReach" disabled>到達を手動記録</button>
+    </div>
+    <div class="laplist" id="lapList"></div>
+  </div>
+
+  <div class="card">
+    <button id="btnToResults">測定を終了して結果へ</button>
+  </div>
+  <video id="preview" playsinline muted autoplay style="display:none"></video>
+</div>
+
+<!-- ============ 4. NRS ============ -->
+<div id="scNrs" class="screen">
+  <h1>恐怖感の評定</h1>
+  <div class="card">
+    <div class="phase" id="nCond">-</div>
+    <div class="muted">「今の姿勢で、<b>転ぶのがどのくらい怖かった</b>ですか？」<br>0＝まったく怖くない　10＝これ以上ないほど怖い</div>
+    <div class="nrsgrid" id="nrsGrid"></div>
+    <label>自由記載（発言・観察所見・Pusher徴候など）</label>
+    <textarea id="nrsNote"></textarea>
+    <div class="row" style="margin-top:10px">
+      <button class="ok" id="btnNrsSave">保存して次へ</button>
+    </div>
+    <button id="btnNrsRedo" style="margin-top:8px">この試行を破棄してやり直す</button>
+  </div>
+  <div class="card">
+    <h2>この試行の計測値</h2>
+    <div id="nSummary"></div>
+    <video id="trialVideo" playsinline controls style="display:none"></video>
+  </div>
+</div>
+
+<!-- ============ 5. 結果 ============ -->
+<div id="scResults" class="screen">
+  <h1>結果とデータ出力</h1>
+  <div class="card">
+    <h2>試行一覧</h2>
+    <div style="overflow-x:auto"><table id="resTable"></table></div>
+  </div>
+  <div class="card">
+    <h2>ダウンロード</h2>
+    <div id="dlLinks"></div>
+    <div class="tiny">CSVはExcelでそのまま開けます（BOM付きUTF-8）。動画は1試行ごとに1ファイルです。iPhoneではリンクをタップ→共有→「ビデオを保存」で写真アプリに保存できます。</div>
+  </div>
+  <div class="card">
+    <button id="btnBackMeasure">測定画面に戻る</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* =========================================================
+   体幹傾斜・恐怖感測定アプリ
+   - 重力(鉛直)基準の絶対角、角速度、直線加速度を同時記録
+   - 試行ごとの動画録画、ビープ／音声によるイベント同期
+   - ラップ（時点記録）機能
+   ========================================================= */
+
+var RAD = 180 / Math.PI;
+var UA = navigator.userAgent;
+var IS_IOS = /iPad|iPhone|iPod/.test(UA) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+/* ---------- 条件定義（表示符号系: 前傾+ / 後傾- / 右+ / 左-） ---------- */
+var CONDS = [
+  { id:'S_F10', name:'前傾 10°', plane:'sagittal', axis:'pitch', target: 10 },
+  { id:'S_F20', name:'前傾 20°', plane:'sagittal', axis:'pitch', target: 20 },
+  { id:'S_B10', name:'後傾 10°', plane:'sagittal', axis:'pitch', target: -10 },
+  { id:'S_B20', name:'後傾 20°', plane:'sagittal', axis:'pitch', target: -20 },
+  { id:'F_R15', name:'右傾斜 15°', plane:'frontal', axis:'roll', target: 15 },
+  { id:'F_R30', name:'右傾斜 30°', plane:'frontal', axis:'roll', target: 30 },
+  { id:'F_L15', name:'左傾斜 15°', plane:'frontal', axis:'roll', target: -15 },
+  { id:'F_L30', name:'左傾斜 30°', plane:'frontal', axis:'roll', target: -30 }
+];
+
+/* ---------- 状態 ---------- */
+var cfg = { video:true, voice:true, beep:true, auto:true, random:false,
+            velLo:3, velHi:8, holdSec:5, signP:1, signR:-1 };
+var meta = { subjId:'', examiner:'', memo:'', started:'' };
+var order = [];
+var trials = [];       // 確定した試行
+var doneIds = {};
+var curIdx = -1;       // 現在選択中の条件 index (order 内)
+var cur = null;        // 進行中の試行オブジェクト
+var raw = [];          // 生データ（進行中の試行のみ）
+var lastTrialBlob = null, lastTrialUrl = null;
+var videoBlobs = [];   // {name, blob, url}
+
+var sensor = {
+  ok:false, pitch:0, roll:0, pitchAcc:0, rollAcc:0,
+  pitchRate:0, rollRate:0, linAcc:0,
+  gravFlip: IS_IOS ? 1 : -1,
+  gyroOk:false, gyroSignP:1, gyroSignR:-1,
+  lastT:0, n:0, hz:0, hzT:0, hzN:0,
+  gLast:{x:0,y:-9.8,z:0}, accRaw:{x:0,y:0,z:0}, rrRaw:{a:0,b:0,g:0},
+  cal:null
+};
+
+var media = { stream:null, recorder:null, chunks:[], mime:'', recStart:0, recording:false };
+var audioCtx = null;
+
+/* ---------- ユーティリティ ---------- */
+function $(id){ return document.getElementById(id); }
+function show(id){
+  var s = document.querySelectorAll('.screen');
+  for (var i=0;i<s.length;i++) s[i].classList.remove('on');
+  $(id).classList.add('on');
+  window.scrollTo(0,0);
+}
+function fx(v,n){ if (v===null||v===undefined||isNaN(v)) return '--'; return Number(v).toFixed(n===undefined?1:n); }
+function nowMs(){ return performance.now(); }
+function pad(n){ return n<10 ? '0'+n : ''+n; }
+function stamp(){
+  var d=new Date();
+  return d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'_'+pad(d.getHours())+pad(d.getMinutes())+pad(d.getSeconds());
+}
+
+/* ---------- 音 ---------- */
+function initAudio(){
+  if (audioCtx) return;
+  var AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return;
+  audioCtx = new AC();
+  // iOS のロック解除（無音を1つ鳴らす）
+  var o = audioCtx.createOscillator(), g = audioCtx.createGain();
+  g.gain.value = 0; o.connect(g); g.connect(audioCtx.destination);
+  o.start(0); o.stop(audioCtx.currentTime + 0.02);
+}
+function beep(freq, ms, vol){
+  if (!cfg.beep || !audioCtx) return;
+  if (audioCtx.state === 'suspended' && audioCtx.resume) audioCtx.resume();
+  var t = audioCtx.currentTime;
+  var o = audioCtx.createOscillator(), g = audioCtx.createGain();
+  o.type='sine'; o.frequency.value = freq;
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(vol===undefined?0.6:vol, t+0.01);
+  g.gain.setValueAtTime(vol===undefined?0.6:vol, t+ms/1000-0.02);
+  g.gain.linearRampToValueAtTime(0, t+ms/1000);
+  o.connect(g); g.connect(audioCtx.destination);
+  o.start(t); o.stop(t+ms/1000+0.02);
+}
+function beepStart(){ beep(1000,120); }
+function beepReach(){ beep(1400,90); setTimeout(function(){ beep(1400,90); },150); }
+function beepEnd(){ beep(620,300); }
+function beepLap(){ beep(1800,70); }
+var lastWarn = 0;
+function beepWarn(){
+  var t = nowMs(); if (t - lastWarn < 700) return; lastWarn = t;
+  beep(300,120,0.45);
+}
+function say(text){
+  if (!cfg.voice || !window.speechSynthesis) return;
+  try{
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang='ja-JP'; u.rate=1.05; u.volume=1;
+    window.speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+/* ---------- 画面スリープ防止 ---------- */
+var wakeLock = null, noSleepVideo = null;
+function keepAwake(){
+  if (navigator.wakeLock && navigator.wakeLock.request){
+    navigator.wakeLock.request('screen').then(function(w){ wakeLock = w; }).catch(function(){});
+  }
+  if (!noSleepVideo){
+    noSleepVideo = document.createElement('video');
+    noSleepVideo.setAttribute('playsinline',''); noSleepVideo.muted = true; noSleepVideo.loop = true;
+    noSleepVideo.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0.01;pointer-events:none;left:0;top:0';
+    noSleepVideo.src = 'data:video/mp4;base64,AAAAIGZ0eXBtcDQyAAACAGlzb21pc28yYXZjMW1wNDEAAAAIZnJlZQAAAr1tZGF0AAACrgYF//+q3EXpvebZSLeWLNgg2SPu73gyNjQgLSBjb3JlIDE0OCByMjYwMSBhMGNkN2QzIC0gSC4yNjQvTVBFRy00IEFWQyBjb2RlYyAtIENvcHlsZWZ0IDIwMDMtMjAxNSAtIGh0dHA6Ly93d3cudmlkZW9sYW4ub3JnL3gyNjQuaHRtbAAAAAFliIQA';
+    document.body.appendChild(noSleepVideo);
+    var p = noSleepVideo.play(); if (p && p.catch) p.catch(function(){});
+  }
+}
+
+/* =========================================================
+   センサー
+   ========================================================= */
+function startSensors(){
+  return new Promise(function(resolve, reject){
+    function attach(){
+      window.addEventListener('devicemotion', onMotion, false);
+      // 実際にイベントが来るか2秒待って判定
+      var t0 = sensor.n;
+      setTimeout(function(){
+        if (sensor.n > t0){ sensor.ok = true; resolve(true); }
+        else reject(new Error('モーションセンサーからデータが取得できません。Safariの設定 →「モーションと画面の向きのアクセス」をONにしてください。'));
+      }, 1500);
+    }
+    if (typeof DeviceMotionEvent === 'undefined'){
+      reject(new Error('この端末／ブラウザはモーションセンサーに対応していません。')); return;
+    }
+    if (typeof DeviceMotionEvent.requestPermission === 'function'){
+      DeviceMotionEvent.requestPermission().then(function(res){
+        if (res === 'granted') attach();
+        else reject(new Error('モーションセンサーの使用が許可されませんでした。ページを再読み込みして「許可」を選んでください。'));
+      }).catch(function(e){ reject(e); });
+    } else {
+      attach();
+    }
+  });
+}
+
+function onMotion(e){
+  var ag = e.accelerationIncludingGravity;
+  if (!ag || ag.x === null) return;
+  var t = nowMs();
+  var dt = sensor.lastT ? (t - sensor.lastT) / 1000 : 1/60;
+  sensor.lastT = t;
+  if (dt < 0.004) dt = 0.004;
+  if (dt > 0.1) dt = 0.1;
+
+  sensor.n++;
+  sensor.hzN++;
+  if (t - sensor.hzT > 1000){ sensor.hz = sensor.hzN * 1000 / (t - sensor.hzT); sensor.hzT = t; sensor.hzN = 0; }
+
+  var f = sensor.gravFlip;
+  var gx = ag.x * f, gy = ag.y * f, gz = ag.z * f;
+  sensor.gLast = { x:gx, y:gy, z:gz };
+
+  // 重力ベクトルから絶対傾斜角（鉛直=0°）
+  var pAcc = Math.atan2(gz, Math.sqrt(gx*gx + gy*gy)) * RAD;  // 端末+z方向（前方）への傾き
+  var rAcc = Math.atan2(gx, Math.sqrt(gy*gy + gz*gz)) * RAD;  // 端末+x方向（画面右）への傾き
+  sensor.pitchAcc = pAcc; sensor.rollAcc = rAcc;
+
+  var rr = e.rotationRate || { alpha:0, beta:0, gamma:0 };
+  var rb = rr.beta || 0, ra = rr.alpha || 0;
+  sensor.rrRaw = { a:ra, b:rr.beta||0, g:rr.gamma||0 };
+  var acc = e.acceleration || { x:0, y:0, z:0 };
+  sensor.accRaw = { x:acc.x||0, y:acc.y||0, z:acc.z||0 };
+  sensor.linAcc = Math.sqrt(sensor.accRaw.x*sensor.accRaw.x + sensor.accRaw.y*sensor.accRaw.y + sensor.accRaw.z*sensor.accRaw.z);
+
+  var prevP = sensor.pitch, prevR = sensor.roll;
+
+  if (sensor.gyroOk){
+    // 相補フィルタ（ジャイロ主体＋加速度で長期補正）
+    var K = 0.02;
+    var gpr = sensor.gyroSignP * rb;
+    var grr = sensor.gyroSignR * ra;
+    sensor.pitch = (prevP + gpr*dt)*(1-K) + pAcc*K;
+    sensor.roll  = (prevR + grr*dt)*(1-K) + rAcc*K;
+    sensor.pitchRate = 0.6*sensor.pitchRate + 0.4*gpr;
+    sensor.rollRate  = 0.6*sensor.rollRate  + 0.4*grr;
+  } else {
+    // 加速度のみ：低域通過＋微分
+    var a = 0.18;
+    sensor.pitch = prevP + a*(pAcc - prevP);
+    sensor.roll  = prevR + a*(rAcc - prevR);
+    sensor.pitchRate = 0.75*sensor.pitchRate + 0.25*((sensor.pitch - prevP)/dt);
+    sensor.rollRate  = 0.75*sensor.rollRate  + 0.25*((sensor.roll  - prevR)/dt);
+  }
+
+  // ジャイロ較正（符号の自動判定）
+  if (sensor.cal){
+    var dP = (pAcc - sensor.cal.prevP)/dt, dR = (rAcc - sensor.cal.prevR)/dt;
+    sensor.cal.prevP = pAcc; sensor.cal.prevR = rAcc;
+    if (Math.abs(dP) > 2) { sensor.cal.corrP += dP * rb; sensor.cal.nP++; }
+    if (Math.abs(dR) > 2) { sensor.cal.corrR += dR * ra; sensor.cal.nR++; }
+    sensor.cal.samples++;
+  }
+
+  if (cur) recordSample(t);
+}
+
+function dispPitch(){ return sensor.pitch * cfg.signP; }
+function dispRoll(){ return sensor.roll * cfg.signR; }
+function dispPitchRate(){ return sensor.pitchRate * cfg.signP; }
+function dispRollRate(){ return sensor.rollRate * cfg.signR; }
+
+/* =========================================================
+   互換性チェック
+   ========================================================= */
+function compatCheck(){
+  var out = [];
+  var https = (location.protocol === 'https:' || location.hostname === 'localhost');
+  if (!https) out.push({t:'err', m:'HTTPSで開かれていません。iPhoneではセンサー・カメラが使えません。https:// のURLで開いてください。'});
+  if (typeof DeviceMotionEvent === 'undefined') out.push({t:'err', m:'モーションセンサー(DeviceMotion)に非対応の環境です。'});
+  var hasMR = (typeof window.MediaRecorder !== 'undefined');
+  var hasGUM = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  if (!hasMR || !hasGUM){
+    out.push({t:'warn', m:'この端末では動画録画(MediaRecorder)が使えません。iOSは14.3以降が必要です。録画なしで測定は可能です（ビープ音で外部カメラと同期してください）。'});
+  }
+  var html = '';
+  for (var i=0;i<out.length;i++) html += '<div class="banner '+out[i].t+'">'+out[i].m+'</div>';
+  if (!html) html = '<div class="banner info">環境チェックOK。センサー・録画とも利用できます。</div>';
+  $('compat').innerHTML = html;
+  if (!hasMR || !hasGUM){ $('optVideo').checked = false; $('optVideo').disabled = true; }
+}
+
+/* =========================================================
+   録画
+   ========================================================= */
+function pickMime(){
+  if (typeof MediaRecorder === 'undefined' || !MediaRecorder.isTypeSupported) return '';
+  var c = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4','video/webm;codecs=vp8,opus','video/webm;codecs=vp9,opus','video/webm'];
+  for (var i=0;i<c.length;i++){ if (MediaRecorder.isTypeSupported(c[i])) return c[i]; }
+  return '';
+}
+function openCamera(){
+  return new Promise(function(resolve, reject){
+    if (!cfg.video){ resolve(null); return; }
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ resolve(null); return; }
+    navigator.mediaDevices.getUserMedia({
+      video: { facingMode:'user', width:{ideal:640}, height:{ideal:480}, frameRate:{ideal:30} },
+      audio: true
+    }).then(function(s){
+      media.stream = s;
+      media.mime = pickMime();
+      var v = $('preview'); v.srcObject = s;
+      var p = v.play(); if (p && p.catch) p.catch(function(){});
+      resolve(s);
+    }).catch(function(e){ reject(e); });
+  });
+}
+function recStart(){
+  if (!cfg.video || !media.stream || typeof MediaRecorder === 'undefined') return;
+  try{
+    media.chunks = [];
+    var opt = { videoBitsPerSecond: 900000, audioBitsPerSecond: 64000 };
+    if (media.mime) opt.mimeType = media.mime;
+    media.recorder = new MediaRecorder(media.stream, opt);
+    media.recorder.ondataavailable = function(ev){ if (ev.data && ev.data.size > 0) media.chunks.push(ev.data); };
+    media.recorder.start();           // timeslice指定なし（iOS互換性優先）
+    media.recStart = nowMs();
+    media.recording = true;
+    $('mRec').className = 'badge on';
+  }catch(e){ media.recording = false; $('mRec').className = 'badge no'; }
+}
+function recStop(){
+  return new Promise(function(resolve){
+    if (!media.recording || !media.recorder){ resolve(null); return; }
+    media.recorder.onstop = function(){
+      media.recording = false;
+      $('mRec').className = 'badge';
+      var type = media.mime || 'video/mp4';
+      var b = new Blob(media.chunks, { type: type });
+      resolve(b);
+    };
+    try{ media.recorder.stop(); }catch(e){ media.recording = false; resolve(null); }
+  });
+}
+
+/* =========================================================
+   試行の記録
+   ========================================================= */
+function condOf(i){ return order[i]; }
+
+function recordSample(t){
+  var rel = t - cur.t0;
+  raw.push([
+    rel.toFixed(1),
+    fx(dispPitch(),2), fx(dispRoll(),2),
+    fx(sensor.pitchAcc*cfg.signP,2), fx(sensor.rollAcc*cfg.signR,2),
+    fx(dispPitchRate(),2), fx(dispRollRate(),2),
+    fx(sensor.rrRaw.a,2), fx(sensor.rrRaw.b,2), fx(sensor.rrRaw.g,2),
+    fx(sensor.accRaw.x,3), fx(sensor.accRaw.y,3), fx(sensor.accRaw.z,3), fx(sensor.linAcc,3),
+    fx(sensor.gLast.x,3), fx(sensor.gLast.y,3), fx(sensor.gLast.z,3),
+    cur.phase, ''
+  ]);
+  updateTrialMetrics(rel);
+}
+
+var RAW_HEADER = ['t_ms','angle_sagittal_deg','angle_frontal_deg','angle_sag_accOnly_deg','angle_fro_accOnly_deg',
+  'angvel_sagittal_dps','angvel_frontal_dps','gyro_alpha_dps','gyro_beta_dps','gyro_gamma_dps',
+  'linacc_x','linacc_y','linacc_z','linacc_resultant','grav_x','grav_y','grav_z','phase','event'];
+
+function markEvent(name){
+  if (!raw.length) return;
+  raw[raw.length-1][18] = name;
+}
+
+function activeAngle(){ return cur.cond.axis === 'pitch' ? dispPitch() : dispRoll(); }
+function activeRate(){  return cur.cond.axis === 'pitch' ? dispPitchRate() : dispRollRate(); }
+
+function updateTrialMetrics(rel){
+  var ang = activeAngle(), rate = Math.abs(activeRate());
+  var sgn = cur.cond.target >= 0 ? 1 : -1;
+  var progressed = ang * sgn;   // 目標方向への傾き量（+）
+
+  if (progressed > cur.peakAngle) cur.peakAngle = progressed;
+  if (sensor.linAcc > cur.peakAcc) cur.peakAcc = sensor.linAcc;
+
+  if (cur.phase === 'tilt' || cur.phase === 'ready'){
+    if (rate > cur.peakVel) cur.peakVel = rate;
+  }
+
+  if (!cfg.auto) return;
+
+  // --- 自動イベント検出 ---
+  if (cur.phase === 'ready'){
+    if (progressed > 2.5){ setPhase('tilt'); cur.tStart = rel; markEvent('TILT_START'); beepStart(); }
+  } else if (cur.phase === 'tilt'){
+    if (progressed >= Math.abs(cur.cond.target) - 2){
+      setPhase('hold'); cur.tReach = rel; markEvent('TARGET_REACHED'); beepReach();
+      cur.holdSum = 0; cur.holdN = 0;
+    }
+  } else if (cur.phase === 'hold'){
+    cur.holdSum += ang; cur.holdN++;
+    if (progressed < 2.5){
+      if (!cur.backT) cur.backT = rel;
+      else if (rel - cur.backT > 400){ setPhase('done'); cur.tEnd = rel; markEvent('RETURN_END'); beepEnd(); }
+    } else { cur.backT = 0; }
+  }
+}
+
+function setPhase(p){
+  cur.phase = p;
+  var m = { ready:'準備 — 傾け始めてください', tilt:'傾斜中 — 速度を一定に', hold:'目標到達 — 保持', done:'終了 — 「試行終了」を押す' };
+  $('mPhase').textContent = m[p] || p;
+  $('mPhase').style.background = (p==='hold') ? '#14361f' : (p==='tilt' ? '#0c2b3a' : 'var(--panel2)');
+}
+
+/* =========================================================
+   UI 更新ループ
+   ========================================================= */
+function tick(){
+  // チェック画面
+  if ($('scCheck').classList.contains('on')){
+    $('chkPitch').innerHTML = fx(dispPitch()) + '<span class="unit">°</span>';
+    $('chkRoll').innerHTML  = fx(dispRoll())  + '<span class="unit">°</span>';
+    $('chkRate').textContent = fx(dispPitchRate()) + ' / ' + fx(dispRollRate()) + ' deg/s';
+    $('chkAcc').textContent = fx(sensor.linAcc,2) + ' m/s²';
+    $('chkHz').textContent = fx(sensor.hz,0) + ' Hz';
+  }
+  // 測定画面
+  if ($('scMeasure').classList.contains('on')){
+    var c = curIdx >= 0 ? condOf(curIdx) : null;
+    var ang = c ? (c.axis === 'pitch' ? dispPitch() : dispRoll()) : dispPitch();
+    var rate = c ? Math.abs(c.axis === 'pitch' ? dispPitchRate() : dispRollRate()) : Math.abs(dispPitchRate());
+    $('mAngle').innerHTML = fx(ang) + '<span class="unit">°</span>';
+
+    var span = 40;
+    if (c && Math.abs(c.target) > 20) span = 45;
+    var pos = Math.max(0, Math.min(100, (ang/span)*50 + 50));
+    $('gMark').style.left = pos + '%';
+    $('gMin').textContent = '-'+span+'°'; $('gMax').textContent = '+'+span+'°';
+    if (c){
+      var tp = (c.target/span)*50 + 50;
+      var tolPct = (2/span)*50;
+      $('gTgt').style.left = tp + '%';
+      $('gZone').style.left = (tp - tolPct) + '%';
+      $('gZone').style.width = (tolPct*2) + '%';
+    }
+
+    // 速度ゲージ（0〜velHi*2 でスケール）
+    var vmax = cfg.velHi * 2;
+    var vp = Math.max(0, Math.min(100, rate/vmax*100));
+    $('vMark').style.left = vp + '%';
+    $('vZone').style.left = (cfg.velLo/vmax*100) + '%';
+    $('vZone').style.width = ((cfg.velHi-cfg.velLo)/vmax*100) + '%';
+    $('mVel').textContent = fx(rate) + ' deg/s';
+    if (cur && (cur.phase === 'tilt')){
+      if (rate > cfg.velHi){ $('mVel').style.color = 'var(--bad)'; $('vMsg').textContent = '速すぎます — もっとゆっくり'; beepWarn(); }
+      else if (rate < cfg.velLo){ $('mVel').style.color = 'var(--warn)'; $('vMsg').textContent = 'やや遅い'; }
+      else { $('mVel').style.color = 'var(--ok)'; $('vMsg').textContent = '適正速度'; }
+    } else { $('mVel').style.color = 'var(--fg)'; }
+
+    if (cur){
+      $('mClock').textContent = fx((nowMs()-cur.t0)/1000) + ' s';
+      $('mPeakA').textContent = fx(cur.peakAngle) + '°';
+      $('mPeakV').textContent = fx(cur.peakVel);
+      $('mPeakAcc').textContent = fx(cur.peakAcc,2);
+    }
+  }
+  requestAnimationFrame(tick);
+}
+
+/* =========================================================
+   条件リスト
+   ========================================================= */
+function buildOrder(){
+  order = CONDS.slice();
+  if (cfg.random){
+    for (var i=order.length-1;i>0;i--){ var j = Math.floor(Math.random()*(i+1)); var t=order[i]; order[i]=order[j]; order[j]=t; }
+  }
+}
+function renderConds(){
+  var h = '';
+  for (var i=0;i<order.length;i++){
+    var c = order[i];
+    var cls = 'cond' + (doneIds[c.id] ? ' done' : '') + (i===curIdx ? ' cur' : '');
+    h += '<button class="'+cls+'" data-i="'+i+'">'+(i+1)+'. '+c.name+(doneIds[c.id]?' ✓':'')+'</button>';
+  }
+  $('condList').innerHTML = h;
+  var bs = $('condList').querySelectorAll('button');
+  for (var k=0;k<bs.length;k++){
+    bs[k].onclick = function(){
+      if (cur) return;
+      curIdx = parseInt(this.getAttribute('data-i'),10);
+      renderConds(); updateCondHeader();
+    };
+  }
+  var n = 0; for (var q in doneIds) if (doneIds[q]) n++;
+  $('mProgress').textContent = '完了 ' + n + ' / ' + order.length;
+}
+function updateCondHeader(){
+  var c = curIdx>=0 ? condOf(curIdx) : null;
+  $('mCondName').textContent = c ? c.name + '（' + (c.plane==='sagittal'?'矢状面':'前額面') + '）' : '条件を選択';
+  $('mTarget').textContent = c ? (c.target>0?'+':'') + c.target + '°' : '--';
+}
+
+/* =========================================================
+   試行の開始・終了
+   ========================================================= */
+function startTrial(){
+  if (curIdx < 0){ alert('先に条件を選んでください。'); return; }
+  var c = condOf(curIdx);
+  cur = {
+    no: trials.length + 1, cond: c, t0: nowMs(), phase: 'ready',
+    tStart: null, tReach: null, tEnd: null, backT: 0,
+    peakAngle: 0, peakVel: 0, peakAcc: 0, holdSum: 0, holdN: 0,
+    laps: [], startClock: new Date().toISOString()
+  };
+  raw = [];
+  setPhase('ready');
+  $('btnTrial').textContent = '試行終了';
+  $('btnTrial').className = 'bad big';
+  $('btnLap').disabled = false;
+  $('btnMarkReach').disabled = false;
+  $('condCard').style.display = 'none';
+  $('lapList').innerHTML = '';
+  recStart();
+  say(c.name);
+  setTimeout(function(){ beepStart(); }, 400);
+}
+
+function endTrial(){
+  var t = nowMs() - cur.t0;
+  if (cur.tEnd === null) cur.tEnd = t;
+  markEvent('TRIAL_END');
+  beepEnd();
+  setPhase('done');
+  $('btnTrial').textContent = '試行開始';
+  $('btnTrial').className = 'primary big';
+  $('btnLap').disabled = true;
+  $('btnMarkReach').disabled = true;
+
+  recStop().then(function(blob){
+    lastTrialBlob = blob;
+    if (lastTrialUrl){ URL.revokeObjectURL(lastTrialUrl); lastTrialUrl = null; }
+    var v = $('trialVideo');
+    if (blob && blob.size > 0){
+      lastTrialUrl = URL.createObjectURL(blob);
+      v.src = lastTrialUrl; v.style.display = 'block';
+    } else { v.style.display = 'none'; }
+    goNrs();
+  });
+}
+
+function addLap(label){
+  if (!cur) return;
+  var t = nowMs() - cur.t0;
+  cur.laps.push({ t:t, label: label || ('LAP'+(cur.laps.length+1)), angle: activeAngle(), rate: activeRate() });
+  markEvent(label || ('LAP'+cur.laps.length));
+  beepLap();
+  var h = '';
+  for (var i=cur.laps.length-1;i>=0;i--){
+    var L = cur.laps[i];
+    h += '<div class="kv"><span>'+L.label+'</span><b>'+fx(L.t/1000,2)+' s / '+fx(L.angle)+'° / '+fx(L.rate)+' dps</b></div>';
+  }
+  $('lapList').innerHTML = h;
+}
+
+/* =========================================================
+   NRS
+   ========================================================= */
+var nrsVal = null;
+function goNrs(){
+  nrsVal = null;
+  $('nCond').textContent = cur.cond.name;
+  $('nrsNote').value = '';
+  var h = '';
+  for (var i=0;i<=10;i++) h += '<button data-v="'+i+'">'+i+'</button>';
+  $('nrsGrid').innerHTML = h;
+  var bs = $('nrsGrid').querySelectorAll('button');
+  for (var k=0;k<bs.length;k++){
+    bs[k].onclick = function(){
+      nrsVal = parseInt(this.getAttribute('data-v'),10);
+      var all = $('nrsGrid').querySelectorAll('button');
+      for (var j=0;j<all.length;j++) all[j].classList.remove('sel');
+      this.classList.add('sel');
+    };
+  }
+  var tiltDur = (cur.tReach!==null && cur.tStart!==null) ? (cur.tReach-cur.tStart)/1000 : null;
+  var meanVel = (tiltDur && tiltDur>0) ? cur.peakAngle/tiltDur : null;
+  var holdDur = (cur.tEnd!==null && cur.tReach!==null) ? (cur.tEnd-cur.tReach)/1000 : null;
+  var holdMean = cur.holdN>0 ? cur.holdSum/cur.holdN : null;
+  cur.tiltDur = tiltDur; cur.meanVel = meanVel; cur.holdDur = holdDur; cur.holdMean = holdMean;
+
+  $('nSummary').innerHTML =
+    kv('目標角', (cur.cond.target>0?'+':'')+cur.cond.target+'°') +
+    kv('到達最大角', fx(cur.peakAngle)+'°') +
+    kv('保持中の平均角', holdMean===null?'--':fx(holdMean)+'°') +
+    kv('傾斜所要時間', tiltDur===null?'--':fx(tiltDur,2)+' s') +
+    kv('平均角速度', meanVel===null?'--':fx(meanVel,2)+' deg/s') +
+    kv('最大角速度', fx(cur.peakVel,2)+' deg/s') +
+    kv('最大直線加速度', fx(cur.peakAcc,3)+' m/s²') +
+    kv('保持時間', holdDur===null?'--':fx(holdDur,2)+' s') +
+    kv('サンプル数', raw.length + ' 点');
+  show('scNrs');
+}
+function kv(a,b){ return '<div class="kv"><span>'+a+'</span><b>'+b+'</b></div>'; }
+
+function saveTrial(){
+  if (nrsVal === null){ alert('NRS（0〜10）を選択してください。'); return; }
+  var vname = null;
+  if (lastTrialBlob && lastTrialBlob.size > 0){
+    var ext = (media.mime.indexOf('mp4') >= 0) ? 'mp4' : 'webm';
+    vname = (meta.subjId||'sub') + '_T' + pad(cur.no) + '_' + cur.cond.id + '.' + ext;
+    videoBlobs.push({ name: vname, blob: lastTrialBlob, url: URL.createObjectURL(lastTrialBlob) });
+  }
+  cur.nrs = nrsVal;
+  cur.note = $('nrsNote').value;
+  cur.videoFile = vname;
+  cur.rawCsv = toCsv([RAW_HEADER].concat(raw));
+  trials.push(cur);
+  doneIds[cur.cond.id] = true;
+
+  var wasIdx = curIdx;
+  cur = null; raw = [];
+  $('condCard').style.display = 'block';
+  // 次の未実施条件へ
+  var next = -1;
+  for (var i=wasIdx+1;i<order.length;i++){ if (!doneIds[order[i].id]){ next = i; break; } }
+  if (next < 0) for (var j=0;j<order.length;j++){ if (!doneIds[order[j].id]){ next = j; break; } }
+  curIdx = next;
+  renderConds(); updateCondHeader(); setPhaseIdle();
+  show('scMeasure');
+  if (next < 0){ setTimeout(function(){ if (confirm('全条件が完了しました。結果画面に移動しますか？')) goResults(); }, 300); }
+}
+function setPhaseIdle(){
+  $('mPhase').textContent = '条件を選んで「試行開始」';
+  $('mPhase').style.background = 'var(--panel2)';
+  $('mPeakA').textContent='0.0°'; $('mPeakV').textContent='0.0'; $('mPeakAcc').textContent='0.00';
+  $('mClock').textContent='0.0 s';
+}
+
+/* =========================================================
+   出力
+   ========================================================= */
+function esc(v){
+  var s = (v===null||v===undefined) ? '' : String(v);
+  if (/[",\n]/.test(s)) s = '"' + s.replace(/"/g,'""') + '"';
+  return s;
+}
+function toCsv(rows){
+  var out = [];
+  for (var i=0;i<rows.length;i++){
+    var r = rows[i], line = [];
+    for (var j=0;j<r.length;j++) line.push(esc(r[j]));
+    out.push(line.join(','));
+  }
+  return out.join('\r\n');
+}
+function blobUrl(text){ return URL.createObjectURL(new Blob(['﻿'+text], {type:'text/csv;charset=utf-8'})); }
+
+var SUM_HEADER = ['subject_id','examiner','session_start','trial_no','condition_id','condition','plane','axis',
+  'target_deg','nrs','peak_angle_deg','hold_mean_angle_deg','tilt_duration_s','mean_angvel_dps','peak_angvel_dps',
+  'peak_linacc_ms2','hold_duration_s','t_start_ms','t_reach_ms','t_end_ms','n_laps','laps','video_file','note',
+  'sign_sagittal','sign_frontal','gyro_calibrated','sampling_hz'];
+
+function buildSummary(){
+  var rows = [SUM_HEADER];
+  for (var i=0;i<trials.length;i++){
+    var t = trials[i], lp = [];
+    for (var k=0;k<t.laps.length;k++) lp.push(t.laps[k].label+'@'+fx(t.laps[k].t/1000,2)+'s('+fx(t.laps[k].angle)+'deg)');
+    rows.push([meta.subjId, meta.examiner, meta.started, t.no, t.cond.id, t.cond.name, t.cond.plane, t.cond.axis,
+      t.cond.target, t.nrs, fx(t.peakAngle,2), t.holdMean===null?'':fx(t.holdMean,2),
+      t.tiltDur===null?'':fx(t.tiltDur,3), t.meanVel===null?'':fx(t.meanVel,3), fx(t.peakVel,3),
+      fx(t.peakAcc,4), t.holdDur===null?'':fx(t.holdDur,3),
+      t.tStart===null?'':fx(t.tStart,0), t.tReach===null?'':fx(t.tReach,0), t.tEnd===null?'':fx(t.tEnd,0),
+      t.laps.length, lp.join(' | '), t.videoFile||'', t.note||'',
+      cfg.signP, cfg.signR, sensor.gyroOk?'yes':'no', fx(sensor.hz,0)]);
+  }
+  return toCsv(rows);
+}
+
+function goResults(){
+  // 表
+  var h = '<tr><th>#</th><th>条件</th><th>NRS</th><th>最大角</th><th>平均速度<br>(dps)</th><th>最大速度<br>(dps)</th><th>最大加速度<br>(m/s²)</th><th>保持<br>(s)</th></tr>';
+  for (var i=0;i<trials.length;i++){
+    var t = trials[i];
+    h += '<tr><td>'+t.no+'</td><td>'+t.cond.name+'</td><td><b>'+t.nrs+'</b></td><td>'+fx(t.peakAngle)+'</td><td>'+
+      (t.meanVel===null?'--':fx(t.meanVel,2))+'</td><td>'+fx(t.peakVel,2)+'</td><td>'+fx(t.peakAcc,3)+'</td><td>'+
+      (t.holdDur===null?'--':fx(t.holdDur,1))+'</td></tr>';
+  }
+  $('resTable').innerHTML = h;
+
+  // ダウンロード
+  var base = (meta.subjId||'sub') + '_' + stamp();
+  var d = '';
+  d += '<a class="dl" href="'+blobUrl(buildSummary())+'" download="'+base+'_summary.csv">試行サマリー CSV をダウンロード</a>';
+  var allRaw = [ ['trial_no','condition_id'].concat(RAW_HEADER) ];
+  for (var j=0;j<trials.length;j++){
+    var lines = trials[j].rawCsv.split('\r\n');
+    for (var k=1;k<lines.length;k++){
+      if (!lines[k]) continue;
+      allRaw.push([trials[j].no, trials[j].cond.id].concat(lines[k].split(',')));
+    }
+  }
+  d += '<a class="dl" href="'+blobUrl(toCsv(allRaw))+'" download="'+base+'_raw.csv">生波形 CSV をダウンロード（全試行）</a>';
+  for (var v=0;v<videoBlobs.length;v++){
+    d += '<a class="dl" href="'+videoBlobs[v].url+'" download="'+videoBlobs[v].name+'">動画: '+videoBlobs[v].name+'</a>';
+  }
+  $('dlLinks').innerHTML = d;
+  show('scResults');
+}
+
+/* =========================================================
+   イベント配線
+   ========================================================= */
+$('btnStart').onclick = function(){
+  cfg.video = $('optVideo').checked;
+  cfg.voice = $('optVoice').checked;
+  cfg.beep = $('optBeep').checked;
+  cfg.auto = $('optAuto').checked;
+  cfg.random = $('optRandom').checked;
+  cfg.velLo = parseFloat($('velLo').value) || 3;
+  cfg.velHi = parseFloat($('velHi').value) || 8;
+  cfg.holdSec = parseFloat($('holdSec').value) || 5;
+  meta.subjId = $('subjId').value.trim();
+  meta.examiner = $('examiner').value.trim();
+  meta.memo = $('memo').value;
+  meta.started = new Date().toISOString();
+
+  initAudio();
+  keepAwake();
+  var btn = this; btn.disabled = true; btn.textContent = '許可を確認中...';
+
+  startSensors().then(function(){
+    return openCamera().catch(function(e){
+      alert('カメラ／マイクを利用できませんでした（' + e.name + '）。録画なしで続行します。');
+      cfg.video = false; return null;
+    });
+  }).then(function(){
+    buildOrder();
+    show('scCheck');
+    btn.disabled = false; btn.textContent = 'センサーを許可して次へ';
+  }).catch(function(e){
+    alert(e.message || String(e));
+    btn.disabled = false; btn.textContent = 'センサーを許可して次へ';
+  });
+};
+
+$('btnZeroCheck').onclick = function(){
+  var gy = sensor.gLast.y;
+  var flipped = false;
+  if (gy > 4){ sensor.gravFlip = -sensor.gravFlip; flipped = true; }
+  setTimeout(function(){
+    var p = dispPitch(), r = dispRoll();
+    $('zeroInfo').innerHTML =
+      (flipped ? '重力の符号を自動反転しました。<br>' : '重力の符号は正常です。<br>') +
+      '装着オフセット（参考値・記録には減算しません）: 矢状 <b>' + fx(p) + '°</b> / 前額 <b>' + fx(r) + '°</b><br>' +
+      (Math.abs(p) > 8 || Math.abs(r) > 8 ? '<span style="color:#f59e0b">オフセットが大きめです。ハーネスの装着角を調整してください。</span>' : '装着は良好です。');
+    $('chkPhase').textContent = 'STEP 1 完了 — 方向を確認してください';
+  }, 250);
+};
+$('btnFlipP').onclick = function(){ cfg.signP = -cfg.signP; $('signP').textContent = (cfg.signP>0?'+1':'-1'); };
+$('btnFlipR').onclick = function(){ cfg.signR = -cfg.signR; $('signR').textContent = (cfg.signR>0?'+1':'-1'); };
+
+$('btnGyroCal').onclick = function(){
+  var b = this; b.disabled = true;
+  sensor.gyroOk = false;
+  sensor.cal = { corrP:0, corrR:0, nP:0, nR:0, samples:0, prevP:sensor.pitchAcc, prevR:sensor.rollAcc };
+  $('gyroInfo').textContent = '較正中... 前後・左右にゆっくり傾けてください';
+  var left = 5;
+  var iv = setInterval(function(){
+    left--; b.textContent = '較正中... ' + left + ' 秒';
+    if (left <= 0){
+      clearInterval(iv);
+      var c = sensor.cal; sensor.cal = null;
+      var okP = c.nP > 20 && Math.abs(c.corrP) > 0;
+      var okR = c.nR > 20 && Math.abs(c.corrR) > 0;
+      if (okP) sensor.gyroSignP = c.corrP > 0 ? 1 : -1;
+      if (okR) sensor.gyroSignR = c.corrR > 0 ? 1 : -1;
+      sensor.gyroOk = okP || okR;
+      $('gyroInfo').innerHTML = sensor.gyroOk
+        ? '較正完了（相補フィルタ有効）。ジャイロ符号: 矢状 ' + sensor.gyroSignP + ' / 前額 ' + sensor.gyroSignR +
+          '<br>有効サンプル: ' + c.nP + ' / ' + c.nR
+        : '<span style="color:#f59e0b">動きが足りず判定できませんでした。加速度センサーのみで推定します（実用上は可）。もう一度、より大きくゆっくり傾けて試してください。</span>';
+      b.disabled = false; b.textContent = 'ジャイロ較正をやり直す';
+    }
+  }, 1000);
+};
+
+$('btnToMeasure').onclick = function(){
+  curIdx = 0;
+  renderConds(); updateCondHeader(); setPhaseIdle();
+  show('scMeasure');
+};
+
+$('btnTrial').onclick = function(){ if (cur) endTrial(); else startTrial(); };
+$('btnLap').onclick = function(){ addLap('LAP' + (cur ? cur.laps.length+1 : 1)); };
+$('btnMarkReach').onclick = function(){
+  if (!cur) return;
+  var t = nowMs() - cur.t0;
+  if (cur.tStart === null){ cur.tStart = t; markEvent('TILT_START_MANUAL'); setPhase('tilt'); beepStart(); }
+  else if (cur.tReach === null){ cur.tReach = t; markEvent('TARGET_REACHED_MANUAL'); setPhase('hold'); beepReach(); }
+  else { addLap('MARK'); }
+};
+$('btnToResults').onclick = function(){
+  if (cur){ alert('進行中の試行を終了してください。'); return; }
+  if (!trials.length){ alert('記録された試行がありません。'); return; }
+  goResults();
+};
+$('btnNrsSave').onclick = saveTrial;
+$('btnNrsRedo').onclick = function(){
+  if (!confirm('この試行のデータを破棄してやり直しますか？')) return;
+  cur = null; raw = []; lastTrialBlob = null;
+  $('condCard').style.display = 'block';
+  renderConds(); updateCondHeader(); setPhaseIdle();
+  show('scMeasure');
+};
+$('btnBackMeasure').onclick = function(){ show('scMeasure'); };
+
+window.addEventListener('beforeunload', function(e){
+  if (trials.length && $('scResults').classList.contains('on') === false){
+    e.preventDefault(); e.returnValue = '';
+  }
+});
+
+compatCheck();
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>
