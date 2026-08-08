@@ -34,14 +34,14 @@
   button.bad{background:var(--bad);color:#2a0505;border-color:var(--bad)}
   button.sel{background:var(--acc);color:#04202c;border-color:var(--acc)}
   button.big{font-size:21px;padding:20px 8px}
+  button.mini{font-size:12px;padding:7px 4px;font-weight:600;color:var(--sub)}
   button:disabled{opacity:.32}
   .muted{color:var(--sub);font-size:13px}
   .tiny{font-size:12px;color:var(--sub)}
   .kv{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed var(--line);font-size:13px}
   .kv b{font-variant-numeric:tabular-nums}
-  .bignum{font-size:58px;font-weight:800;text-align:center;font-variant-numeric:tabular-nums;line-height:1;letter-spacing:-2px}
-  .unit{font-size:20px;font-weight:600;color:var(--sub)}
-  .gauge{position:relative;height:30px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:5px 0}
+  .unit{font-size:18px;font-weight:600;color:var(--sub)}
+  .gauge{position:relative;height:28px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:5px 0}
   .gauge .zone{position:absolute;top:0;bottom:0;background:rgba(34,197,94,.30)}
   .gauge .zero{position:absolute;top:0;bottom:0;width:2px;left:50%;background:var(--sub)}
   .gauge .mark{position:absolute;top:2px;bottom:2px;width:6px;border-radius:3px;background:var(--acc);margin-left:-3px}
@@ -65,31 +65,43 @@
   .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:7px}
 
-  /* ---- 指示表示 ---- */
+  /* ---- 指示 ---- */
   .instr{background:linear-gradient(180deg,#1c2b3a,#16212c);border:2px solid var(--acc);
-    border-radius:14px;padding:14px 10px;text-align:center;margin-bottom:10px}
-  .instr .no{display:inline-block;min-width:42px;padding:3px 10px;border-radius:99px;
-    background:var(--acc);color:#04202c;font-weight:800;font-size:17px;margin-bottom:6px}
-  .instr .dir{font-size:46px;font-weight:900;line-height:1.1;letter-spacing:-1px;margin:2px 0}
-  .instr .deg{font-size:70px;font-weight:900;line-height:1;letter-spacing:-3px}
-  .instr .eye{display:inline-block;padding:5px 16px;border-radius:99px;font-size:20px;font-weight:800;margin-top:8px}
+    border-radius:14px;padding:12px 10px;text-align:center;margin-bottom:8px}
+  .instr .no{display:inline-block;min-width:40px;padding:2px 12px;border-radius:99px;
+    background:var(--acc);color:#04202c;font-weight:800;font-size:16px}
+  .instr .plane{display:inline-block;padding:2px 12px;border-radius:99px;margin-left:5px;
+    background:var(--panel2);border:1px solid var(--line);font-weight:700;font-size:14px;color:var(--sub)}
+  .instr .dir{font-size:42px;font-weight:900;line-height:1.12;letter-spacing:-1px;margin:5px 0 0}
+  .instr .deg{font-size:64px;font-weight:900;line-height:1;letter-spacing:-3px}
+  .instr .eye{display:inline-block;padding:4px 16px;border-radius:99px;font-size:18px;font-weight:800;margin-top:6px}
   .eye.open{background:var(--eyeO);color:#04202c}
   .eye.closed{background:var(--eyeC);color:#1a0a35}
-  .steplist{display:grid;grid-template-columns:1fr;gap:4px;font-size:13px}
+
+  /* ---- 2平面同時表示 ---- */
+  .dual{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+  .ang{background:var(--panel);border:2px solid var(--line);border-radius:12px;padding:8px 6px;text-align:center}
+  .ang.act{border-color:var(--acc);background:#14293a}
+  .ang .lb{font-size:12px;color:var(--sub);font-weight:700}
+  .ang .vl{font-size:40px;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.05;letter-spacing:-2px}
+  .ang .sb{font-size:11px;color:var(--sub);font-variant-numeric:tabular-nums}
+
+  .steplist{max-height:240px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .steplist .hd{font-size:12px;font-weight:800;color:var(--acc);padding:6px 4px 3px}
   .steplist .s{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:7px;
-    background:var(--panel2);border:1px solid var(--line)}
-  .steplist .s .n{flex:0 0 26px;text-align:center;font-weight:800;color:var(--sub)}
-  .steplist .s .t{flex:1;font-weight:700}
-  .steplist .s .v{flex:0 0 auto;font-size:12px;color:var(--sub);font-variant-numeric:tabular-nums}
+    background:var(--panel2);border:1px solid var(--line);margin-bottom:4px}
+  .steplist .s .n{flex:0 0 26px;text-align:center;font-weight:800;color:var(--sub);font-size:13px}
+  .steplist .s .t{flex:1;font-weight:700;font-size:13px}
+  .steplist .s .v{flex:0 0 auto;font-size:11px;color:var(--sub);font-variant-numeric:tabular-nums}
   .steplist .s.cur{background:#0c3348;border-color:var(--acc);box-shadow:0 0 0 2px rgba(56,189,248,.35)}
-  .steplist .s.done{opacity:.55;border-color:var(--ok)}
+  .steplist .s.done{opacity:.5;border-color:var(--ok)}
   .steplist .s.done .n{color:var(--ok)}
-  .phase{text-align:center;font-size:15px;font-weight:800;padding:7px;border-radius:8px;background:var(--panel2);margin-bottom:8px}
-  .blockcard{display:flex;align-items:center;gap:9px;padding:11px;border-radius:10px;
-    background:var(--panel2);border:1px solid var(--line);margin-bottom:7px;cursor:pointer}
-  .blockcard .bn{flex:0 0 28px;text-align:center;font-weight:800;color:var(--sub)}
-  .blockcard .bt{flex:1;font-weight:700;font-size:15px}
-  .blockcard.done{border-color:var(--ok);opacity:.6}
+  .phase{text-align:center;font-size:14px;font-weight:800;padding:6px;border-radius:8px;background:var(--panel2);margin-bottom:7px}
+  .blockcard{display:flex;align-items:center;gap:9px;padding:14px 11px;border-radius:10px;
+    background:var(--panel2);border:1px solid var(--line);margin-bottom:8px;cursor:pointer}
+  .blockcard .bn{flex:0 0 30px;text-align:center;font-weight:800;color:var(--sub);font-size:18px}
+  .blockcard .bt{flex:1;font-weight:800;font-size:17px}
+  .blockcard.done{border-color:var(--ok);opacity:.65}
   .blockcard.cur{border-color:var(--acc);box-shadow:0 0 0 2px rgba(56,189,248,.3)}
 </style>
 </head>
@@ -129,24 +141,31 @@
 
   <div class="card">
     <h2>測定オプション</h2>
-    <div class="toggle"><input type="checkbox" id="optVideo" checked><span>ブロックごとに連続録画する（前面カメラ・音声あり）</span></div>
+    <label>記録モード（ブロックごとに1ファイル）</label>
+    <div class="grid2" id="recBtns" style="grid-template-columns:1fr 1fr 1fr">
+      <button data-v="audio">音声のみ</button>
+      <button data-v="video">動画＋音声</button>
+      <button data-v="none">記録なし</button>
+    </div>
+    <div class="tiny" id="recInfo" style="margin:6px 0 4px">音声のみ：約0.5 MB/分。傾斜のタイミングはセンサーCSVに記録されるため、通常はこれで十分です。</div>
     <div class="toggle"><input type="checkbox" id="optSyncBeep" checked><span>ブロック開始／終了時に同期ビープ</span></div>
     <div class="toggle"><input type="checkbox" id="optEventBeep"><span>各傾斜の開始・到達時にもビープ（被検者への手がかりになるため既定OFF）</span></div>
-    <div class="toggle"><input type="checkbox" id="optAuto" checked><span>全自動進行（鉛直復帰で次の工程へ／画面に触れずに実施できます）</span></div>
     <label>目標角速度（deg/s）</label>
     <div class="row">
       <div><input type="number" id="velLo" value="3" step="0.5"><div class="tiny">下限</div></div>
       <div><input type="number" id="velHi" value="8" step="0.5"><div class="tiny">上限</div></div>
     </div>
     <div class="row">
-      <div><label>正中位の記録時間（秒）</label><input type="number" id="midSec" value="10" step="1"></div>
-      <div><label>工程間インターバル（秒）</label><input type="number" id="gapSec" value="3" step="1"></div>
+      <div><label>正中位の記録（秒）</label><input type="number" id="midSec" value="10" step="1"></div>
+      <div><label>工程間の間隔（秒）</label><input type="number" id="gapSec" value="3" step="1"></div>
     </div>
+    <label>平面切り替えの休憩（秒）</label><input type="number" id="breakSec" value="20" step="5">
+    <div class="tiny" style="margin-top:6px">※測定中は画面操作不要です。すべて自動で進みます。</div>
   </div>
 
   <div class="card">
     <button class="primary big" id="btnStart">センサーを許可して次へ</button>
-    <div class="tiny" style="margin-top:8px">iPhoneではモーション・カメラ・マイクの許可が求められます。すべて「許可」を選んでください。</div>
+    <div class="tiny" style="margin-top:8px">iPhoneではモーションセンサーとマイク（動画モードではカメラも）の許可が求められます。すべて「許可」を選んでください。</div>
   </div>
 </div>
 
@@ -158,11 +177,11 @@
     <div class="row">
       <div>
         <div class="tiny" style="text-align:center">矢状面（前＋／後−）</div>
-        <div class="bignum" id="chkPitch" style="font-size:40px">0.0<span class="unit">°</span></div>
+        <div style="font-size:38px;font-weight:800;text-align:center;font-variant-numeric:tabular-nums" id="chkPitch">0.0<span class="unit">°</span></div>
       </div>
       <div>
         <div class="tiny" style="text-align:center">前額面（右＋／左−）</div>
-        <div class="bignum" id="chkRoll" style="font-size:40px">0.0<span class="unit">°</span></div>
+        <div style="font-size:38px;font-weight:800;text-align:center;font-variant-numeric:tabular-nums" id="chkRoll">0.0<span class="unit">°</span></div>
       </div>
     </div>
     <div class="kv"><span>角速度（矢状／前額）</span><b id="chkRate">0.0 / 0.0 deg/s</b></div>
@@ -203,14 +222,18 @@
   <div class="card">
     <div id="sessInfo" class="banner info"></div>
     <div id="blockList"></div>
-    <div class="tiny" style="margin-top:8px">上から順に実施します。任意のブロックをタップして開始することもできます。</div>
+    <div class="tiny" style="margin-top:8px">1ブロック＝前額面9工程 → 休憩 → 矢状面9工程。開始後は画面操作なしで最後まで自動で進みます。</div>
+  </div>
+  <div class="card" id="quickDl" style="display:none">
+    <h2>このブロックのデータ</h2>
+    <div id="quickDlLinks"></div>
   </div>
   <div class="card"><button id="btnToResults2">結果とデータ出力へ</button></div>
 </div>
 
 <!-- ========== 4. 測定 ========== -->
 <div id="scRun" class="screen">
-  <div class="card" style="padding:8px 11px">
+  <div class="card" style="padding:7px 11px">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <div><b id="rBlockName" style="font-size:15px">-</b><div class="tiny" id="rProgress"></div></div>
       <div style="text-align:right"><span class="badge" id="rRec">●REC</span><div class="tiny" id="rClock">0.0 s</div></div>
@@ -218,21 +241,33 @@
   </div>
 
   <div class="instr" id="instrBox">
-    <div class="no" id="iNo">①</div>
+    <div><span class="no" id="iNo">－</span><span class="plane" id="iPlane">前額面</span></div>
     <div class="dir" id="iDir">ブロック開始を押してください</div>
     <div class="deg" id="iDeg"></div>
     <div><span class="eye open" id="iEye">開眼</span></div>
   </div>
 
+  <div class="dual">
+    <div class="ang" id="angF">
+      <div class="lb">前額面（右＋／左−）</div>
+      <div class="vl" id="vF">0.0<span class="unit">°</span></div>
+      <div class="sb" id="sF">0.0 deg/s</div>
+    </div>
+    <div class="ang" id="angS">
+      <div class="lb">矢状面（前＋／後−）</div>
+      <div class="vl" id="vS">0.0<span class="unit">°</span></div>
+      <div class="sb" id="sS">0.0 deg/s</div>
+    </div>
+  </div>
+
   <div class="card">
     <div class="phase" id="rPhase">待機中</div>
-    <div class="bignum" id="rAngle">0.0<span class="unit">°</span></div>
     <div class="gauge" id="gA"><div class="zone" id="gZone"></div><div class="zero"></div><div class="tgt" id="gTgt"></div><div class="mark" id="gMark" style="left:50%"></div></div>
-    <div class="tiny" style="display:flex;justify-content:space-between"><span id="gMin">-45°</span><span>目標 <b id="rTarget">--</b></span><span id="gMax">+45°</span></div>
-    <div style="margin-top:10px;display:flex;justify-content:space-between;font-size:13px">
-      <span class="muted">傾斜速度</span><b id="rVel" style="font-size:19px">0.0 deg/s</b>
+    <div class="tiny" style="display:flex;justify-content:space-between"><span>-45°</span><span>目標 <b id="rTarget">--</b></span><span>+45°</span></div>
+    <div style="margin-top:8px;display:flex;justify-content:space-between;font-size:13px">
+      <span class="muted">傾斜速度</span><b id="rVel" style="font-size:18px">0.0 deg/s</b>
     </div>
-    <div class="gauge" style="height:22px"><div class="zone" id="vZone"></div><div class="mark" id="vMark" style="left:0%"></div></div>
+    <div class="gauge" style="height:20px"><div class="zone" id="vZone"></div><div class="mark" id="vMark" style="left:0%"></div></div>
     <div class="tiny" id="vMsg">ゆっくり一定の速度で</div>
     <div class="row" style="margin-top:4px">
       <div class="kv" style="flex:1"><span>最大角</span><b id="rPeakA">0.0°</b></div>
@@ -242,20 +277,19 @@
   </div>
 
   <div class="card">
-    <button class="primary big" id="btnBlock">ブロック開始</button>
-    <div class="row" style="margin-top:7px">
-      <button id="btnNext" disabled>次の工程へ</button>
-      <button id="btnRedoStep" disabled>この工程をやり直す</button>
+    <h2>実施順（このブロック）</h2>
+    <div class="steplist" id="stepList"></div>
+    <div class="row" style="margin-top:6px">
+      <button class="mini" id="btnPrevStep" disabled>◀ 工程を1つ戻す（補正用）</button>
+      <button class="mini" id="btnNextStep" disabled>工程を1つ進める（補正用）▶</button>
     </div>
-    <button id="btnLap" disabled style="margin-top:7px">ラップ（任意の時点を記録）</button>
   </div>
 
   <div class="card">
-    <h2>工程一覧</h2>
-    <div class="steplist" id="stepList"></div>
+    <button class="primary big" id="btnBlock">ブロック開始</button>
+    <button id="btnLap" disabled style="margin-top:7px">ラップ（任意の時点を記録）</button>
+    <button id="btnAbort" style="margin-top:7px">ブロックを中止してブロック選択へ</button>
   </div>
-
-  <div class="card"><button id="btnAbort">ブロックを中止してブロック選択へ</button></div>
   <video id="preview" playsinline muted autoplay style="display:none"></video>
 </div>
 
@@ -277,20 +311,19 @@
 <script>
 "use strict";
 /* =========================================================
-   体幹傾斜測定アプリ（転倒恐怖感シート対応版）
-   - 前額面/矢状面 × パターンA-D × 開眼/閉眼 の4ブロック構成
-   - 各ブロック: 正中位 + 傾斜8工程
-   - NRSは別紙記入のためアプリでは入力しない
+   体幹傾斜測定アプリ（転倒恐怖感シート対応 / 操作レス版）
+   - 開眼ブロック・閉眼ブロックの計2ブロック
+   - 1ブロック = 前額面(正中位+8) → 休憩 → 矢状面(正中位+8)
+   - 開始後は全自動進行。工程ごとのボタン操作は不要
+   - NRSは別紙記入のためアプリでは扱わない
    ========================================================= */
 
-var RAD = 180 / Math.PI;
+var RAD = 180/Math.PI;
 var UA = navigator.userAgent;
-var IS_IOS = /iPad|iPhone|iPod/.test(UA) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-var CIRC = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨'];
+var IS_IOS = /iPad|iPhone|iPod/.test(UA) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+var CIRC = ['','①','②','③','④','⑤','⑥','⑦','⑧'];
 
-/* ---------- プロトコル（転倒恐怖感シートより） ----------
-   前額面: P=麻痺側 / N=非麻痺側
-   矢状面: F=前方   / B=後方                                */
+/* ---------- プロトコル（転倒恐怖感シート） ---------- */
 var PATTERNS = {
   frontal: {
     A: ['P15','N30','N30','P15','N15','P30','P30','N15'],
@@ -306,15 +339,16 @@ var PATTERNS = {
   }
 };
 
-var cfg = { video:true, syncBeep:true, eventBeep:false, auto:true,
-            velLo:3, velHi:8, midSec:10, gapSec:3, signP:1, signR:-1 };
+var cfg = { recMode:'audio', syncBeep:true, eventBeep:false,
+            velLo:3, velHi:8, midSec:10, gapSec:3, breakSec:20, signP:1, signR:-1 };
 var meta = { subjId:'', examiner:'', memo:'', paretic:'', pattern:'', startEye:'', started:'' };
 
-var blocks = [];          // [{eye, plane, done, steps:[...] }]
+var blocks = [];
 var curBlockIdx = -1;
-var blk = null;           // 進行中ブロックの実行状態
-var raw = [];             // 進行中ブロックの生データ
-var allSteps = [];        // 確定した全工程サマリー
+var blk = null;
+var rawLines = [];
+var pendingEvent = '';
+var allSteps = [];
 var videoBlobs = [];
 
 var sensor = {
@@ -346,11 +380,11 @@ function initAudio(){
   audioCtx = new AC();
   var o = audioCtx.createOscillator(), g = audioCtx.createGain();
   g.gain.value = 0; o.connect(g); g.connect(audioCtx.destination);
-  o.start(0); o.stop(audioCtx.currentTime + 0.02);
+  o.start(0); o.stop(audioCtx.currentTime+0.02);
 }
 function tone(freq, ms, vol){
   if (!audioCtx) return;
-  if (audioCtx.state === 'suspended' && audioCtx.resume) audioCtx.resume();
+  if (audioCtx.state==='suspended' && audioCtx.resume) audioCtx.resume();
   var t = audioCtx.currentTime, o = audioCtx.createOscillator(), g = audioCtx.createGain();
   o.type='sine'; o.frequency.value=freq;
   g.gain.setValueAtTime(0,t);
@@ -361,6 +395,7 @@ function tone(freq, ms, vol){
 }
 function beepSync(){ if (cfg.syncBeep){ tone(1000,120); setTimeout(function(){ tone(1000,120); },200); } }
 function beepEndBlock(){ if (cfg.syncBeep) tone(620,400); }
+function beepBreak(){ if (cfg.syncBeep){ tone(800,150); setTimeout(function(){ tone(600,150); },180); } }
 function beepEvent(f){ if (cfg.eventBeep) tone(f,90); }
 var lastWarn = 0;
 function beepWarn(){ var t=nowMs(); if (t-lastWarn<800) return; lastWarn=t; tone(300,110,0.4); }
@@ -390,16 +425,16 @@ function startSensors(){
       window.addEventListener('devicemotion', onMotion, false);
       var t0 = sensor.n;
       setTimeout(function(){
-        if (sensor.n > t0){ sensor.ok = true; resolve(true); }
+        if (sensor.n > t0){ sensor.ok=true; resolve(true); }
         else reject(new Error('モーションセンサーからデータが取得できません。Safariの設定 →「モーションと画面の向きのアクセス」をONにしてください。'));
       }, 1500);
     }
     if (typeof DeviceMotionEvent === 'undefined'){ reject(new Error('この環境はモーションセンサーに非対応です。')); return; }
     if (typeof DeviceMotionEvent.requestPermission === 'function'){
       DeviceMotionEvent.requestPermission().then(function(res){
-        if (res === 'granted') attach();
+        if (res==='granted') attach();
         else reject(new Error('モーションセンサーの使用が許可されませんでした。再読み込みして「許可」を選んでください。'));
-      }).catch(function(e){ reject(e); });
+      }).catch(reject);
     } else attach();
   });
 }
@@ -408,114 +443,135 @@ function onMotion(e){
   var ag = e.accelerationIncludingGravity;
   if (!ag || ag.x === null) return;
   var t = nowMs();
-  var dt = sensor.lastT ? (t - sensor.lastT)/1000 : 1/60;
+  var dt = sensor.lastT ? (t-sensor.lastT)/1000 : 1/60;
   sensor.lastT = t;
-  if (dt < 0.004) dt = 0.004; if (dt > 0.1) dt = 0.1;
+  if (dt<0.004) dt=0.004; if (dt>0.1) dt=0.1;
   sensor.n++; sensor.hzN++;
-  if (t - sensor.hzT > 1000){ sensor.hz = sensor.hzN*1000/(t-sensor.hzT); sensor.hzT=t; sensor.hzN=0; }
+  if (t-sensor.hzT > 1000){ sensor.hz = sensor.hzN*1000/(t-sensor.hzT); sensor.hzT=t; sensor.hzN=0; }
 
   var f = sensor.gravFlip;
-  var gx = ag.x*f, gy = ag.y*f, gz = ag.z*f;
+  var gx=ag.x*f, gy=ag.y*f, gz=ag.z*f;
   sensor.gLast = {x:gx,y:gy,z:gz};
   var pAcc = Math.atan2(gz, Math.sqrt(gx*gx+gy*gy))*RAD;
   var rAcc = Math.atan2(gx, Math.sqrt(gy*gy+gz*gz))*RAD;
-  sensor.pitchAcc = pAcc; sensor.rollAcc = rAcc;
+  sensor.pitchAcc=pAcc; sensor.rollAcc=rAcc;
 
   var rr = e.rotationRate || {alpha:0,beta:0,gamma:0};
   var rb = rr.beta||0, ra = rr.alpha||0;
-  sensor.rrRaw = {a:ra, b:rb, g:rr.gamma||0};
+  sensor.rrRaw = {a:ra,b:rb,g:rr.gamma||0};
   var acc = e.acceleration || {x:0,y:0,z:0};
-  sensor.accRaw = {x:acc.x||0, y:acc.y||0, z:acc.z||0};
-  sensor.linAcc = Math.sqrt(sensor.accRaw.x*sensor.accRaw.x + sensor.accRaw.y*sensor.accRaw.y + sensor.accRaw.z*sensor.accRaw.z);
+  sensor.accRaw = {x:acc.x||0,y:acc.y||0,z:acc.z||0};
+  sensor.linAcc = Math.sqrt(sensor.accRaw.x*sensor.accRaw.x+sensor.accRaw.y*sensor.accRaw.y+sensor.accRaw.z*sensor.accRaw.z);
 
-  var prevP = sensor.pitch, prevR = sensor.roll;
+  var prevP=sensor.pitch, prevR=sensor.roll;
   if (sensor.gyroOk){
-    var K = 0.02;
-    var gpr = sensor.gyroSignP*rb, grr = sensor.gyroSignR*ra;
-    sensor.pitch = (prevP + gpr*dt)*(1-K) + pAcc*K;
-    sensor.roll  = (prevR + grr*dt)*(1-K) + rAcc*K;
-    sensor.pitchRate = 0.6*sensor.pitchRate + 0.4*gpr;
-    sensor.rollRate  = 0.6*sensor.rollRate  + 0.4*grr;
+    var K=0.02, gpr=sensor.gyroSignP*rb, grr=sensor.gyroSignR*ra;
+    sensor.pitch = (prevP+gpr*dt)*(1-K)+pAcc*K;
+    sensor.roll  = (prevR+grr*dt)*(1-K)+rAcc*K;
+    sensor.pitchRate = 0.6*sensor.pitchRate+0.4*gpr;
+    sensor.rollRate  = 0.6*sensor.rollRate +0.4*grr;
   } else {
-    var a = 0.18;
-    sensor.pitch = prevP + a*(pAcc-prevP);
-    sensor.roll  = prevR + a*(rAcc-prevR);
-    sensor.pitchRate = 0.75*sensor.pitchRate + 0.25*((sensor.pitch-prevP)/dt);
-    sensor.rollRate  = 0.75*sensor.rollRate  + 0.25*((sensor.roll -prevR)/dt);
+    var a=0.18;
+    sensor.pitch = prevP+a*(pAcc-prevP);
+    sensor.roll  = prevR+a*(rAcc-prevR);
+    sensor.pitchRate = 0.75*sensor.pitchRate+0.25*((sensor.pitch-prevP)/dt);
+    sensor.rollRate  = 0.75*sensor.rollRate +0.25*((sensor.roll -prevR)/dt);
   }
 
   if (sensor.cal){
-    var dP = (pAcc - sensor.cal.prevP)/dt, dR = (rAcc - sensor.cal.prevR)/dt;
-    sensor.cal.prevP = pAcc; sensor.cal.prevR = rAcc;
-    if (Math.abs(dP) > 2){ sensor.cal.corrP += dP*rb; sensor.cal.nP++; }
-    if (Math.abs(dR) > 2){ sensor.cal.corrR += dR*ra; sensor.cal.nR++; }
+    var dP=(pAcc-sensor.cal.prevP)/dt, dR=(rAcc-sensor.cal.prevR)/dt;
+    sensor.cal.prevP=pAcc; sensor.cal.prevR=rAcc;
+    if (Math.abs(dP)>2){ sensor.cal.corrP+=dP*rb; sensor.cal.nP++; }
+    if (Math.abs(dR)>2){ sensor.cal.corrR+=dR*ra; sensor.cal.nR++; }
   }
 
   if (blk && blk.running) onSample(t);
 }
 
-function dispPitch(){ return sensor.pitch * cfg.signP; }
-function dispRoll(){ return sensor.roll * cfg.signR; }
-function dispPitchRate(){ return sensor.pitchRate * cfg.signP; }
-function dispRollRate(){ return sensor.rollRate * cfg.signR; }
+function dispPitch(){ return sensor.pitch*cfg.signP; }
+function dispRoll(){ return sensor.roll*cfg.signR; }
+function dispPitchRate(){ return sensor.pitchRate*cfg.signP; }
+function dispRollRate(){ return sensor.rollRate*cfg.signR; }
 
 /* =========================================================
-   互換性チェック
+   互換性
    ========================================================= */
 function compatCheck(){
-  var out = [];
-  var https = (location.protocol === 'https:' || location.hostname === 'localhost');
-  if (!https) out.push({t:'err', m:'HTTPSで開かれていません。iPhoneではセンサー・カメラが使えません。'});
-  if (typeof DeviceMotionEvent === 'undefined') out.push({t:'err', m:'モーションセンサー(DeviceMotion)に非対応の環境です。'});
-  var hasMR = (typeof window.MediaRecorder !== 'undefined');
-  var hasGUM = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
-  if (!hasMR || !hasGUM) out.push({t:'warn', m:'この端末では動画録画が使えません（iOSは14.3以降が必要）。録画なしで測定できます。'});
-  var html = '';
-  for (var i=0;i<out.length;i++) html += '<div class="banner '+out[i].t+'">'+out[i].m+'</div>';
-  if (!html) html = '<div class="banner info">環境チェックOK。センサー・録画とも利用できます。</div>';
-  $('compat').innerHTML = html;
-  if (!hasMR || !hasGUM){ $('optVideo').checked=false; $('optVideo').disabled=true; }
+  var out=[];
+  var https=(location.protocol==='https:'||location.hostname==='localhost');
+  if (!https) out.push({t:'err',m:'HTTPSで開かれていません。iPhoneではセンサー・カメラが使えません。'});
+  if (typeof DeviceMotionEvent==='undefined') out.push({t:'err',m:'モーションセンサーに非対応の環境です。'});
+  var hasMR=(typeof window.MediaRecorder!=='undefined');
+  var hasGUM=!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia);
+  if (!hasMR||!hasGUM) out.push({t:'warn',m:'この端末では録音・録画が使えません（iOSは14.3以降が必要）。センサー記録のみで測定できます。'});
+  var html='';
+  for (var i=0;i<out.length;i++) html+='<div class="banner '+out[i].t+'">'+out[i].m+'</div>';
+  if (!html) html='<div class="banner info">環境チェックOK。センサー・録音とも利用できます。</div>';
+  $('compat').innerHTML=html;
+  if (!hasMR||!hasGUM){
+    cfg.recMode='none';
+    var rb=$('recBtns').querySelectorAll('button');
+    for (var k=0;k<rb.length;k++){ rb[k].disabled = (rb[k].getAttribute('data-v')!=='none'); rb[k].classList.remove('sel'); }
+    rb[rb.length-1].classList.add('sel');
+    $('recInfo').textContent='録音・録画が利用できないため「記録なし」に固定されています。';
+  }
 }
 
 /* =========================================================
    録画
    ========================================================= */
 function pickMime(){
-  if (typeof MediaRecorder === 'undefined' || !MediaRecorder.isTypeSupported) return '';
-  var c = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4','video/webm;codecs=vp8,opus','video/webm'];
+  if (typeof MediaRecorder==='undefined'||!MediaRecorder.isTypeSupported) return '';
+  var c = (cfg.recMode==='video')
+    ? ['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4','video/webm;codecs=vp8,opus','video/webm']
+    : ['audio/mp4;codecs=mp4a.40.2','audio/mp4','audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus'];
   for (var i=0;i<c.length;i++) if (MediaRecorder.isTypeSupported(c[i])) return c[i];
   return '';
 }
-function openCamera(){
-  return new Promise(function(resolve, reject){
-    if (!cfg.video || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ resolve(null); return; }
-    navigator.mediaDevices.getUserMedia({
-      video:{ facingMode:'user', width:{ideal:640}, height:{ideal:480}, frameRate:{ideal:30} }, audio:true
-    }).then(function(s){
-      media.stream = s; media.mime = pickMime();
-      var v = $('preview'); v.srcObject = s; var p = v.play(); if (p && p.catch) p.catch(function(){});
+function extFor(type){
+  var t = (type||'').toLowerCase();
+  if (t.indexOf('audio/mp4')>=0) return 'm4a';
+  if (t.indexOf('video/mp4')>=0) return 'mp4';
+  if (t.indexOf('ogg')>=0) return 'ogg';
+  if (t.indexOf('webm')>=0) return 'webm';
+  return (cfg.recMode==='video') ? 'mp4' : 'm4a';
+}
+function openMedia(){
+  return new Promise(function(resolve,reject){
+    if (cfg.recMode==='none'||!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){ resolve(null); return; }
+    var con = { audio:true };
+    if (cfg.recMode==='video') con.video={facingMode:'user',width:{ideal:320},height:{ideal:240},frameRate:{ideal:15}};
+    navigator.mediaDevices.getUserMedia(con).then(function(s){
+      media.stream=s; media.mime=pickMime();
+      if (cfg.recMode==='video'){
+        var v=$('preview'); v.srcObject=s; var p=v.play(); if (p&&p.catch) p.catch(function(){});
+      }
       resolve(s);
     }).catch(reject);
   });
 }
 function recStart(){
-  if (!cfg.video || !media.stream || typeof MediaRecorder === 'undefined') return;
+  if (cfg.recMode==='none'||!media.stream||typeof MediaRecorder==='undefined') return;
   try{
-    media.chunks = [];
-    var opt = { videoBitsPerSecond:900000, audioBitsPerSecond:64000 };
-    if (media.mime) opt.mimeType = media.mime;
-    media.recorder = new MediaRecorder(media.stream, opt);
-    media.recorder.ondataavailable = function(ev){ if (ev.data && ev.data.size>0) media.chunks.push(ev.data); };
+    media.chunks=[];
+    var opt={ audioBitsPerSecond:64000 };
+    if (cfg.recMode==='video') opt.videoBitsPerSecond=250000;
+    if (media.mime) opt.mimeType=media.mime;
+    try{ media.recorder=new MediaRecorder(media.stream,opt); }
+    catch(e1){ media.recorder=new MediaRecorder(media.stream); media.mime=media.recorder.mimeType||''; }
+    media.recorder.ondataavailable=function(ev){ if (ev.data&&ev.data.size>0) media.chunks.push(ev.data); };
     media.recorder.start();
-    media.recording = true; $('rRec').className = 'badge on';
+    media.recording=true; $('rRec').className='badge on';
+    $('rRec').textContent = (cfg.recMode==='video') ? '●REC' : '●録音';
   }catch(e){ media.recording=false; $('rRec').className='badge no'; }
 }
 function recStop(){
   return new Promise(function(resolve){
-    if (!media.recording || !media.recorder){ resolve(null); return; }
-    media.recorder.onstop = function(){
+    if (!media.recording||!media.recorder){ resolve(null); return; }
+    media.recorder.onstop=function(){
       media.recording=false; $('rRec').className='badge';
-      resolve(new Blob(media.chunks, {type: media.mime || 'video/mp4'}));
+      var type = media.mime || media.recorder.mimeType || (cfg.recMode==='video'?'video/mp4':'audio/mp4');
+      resolve(new Blob(media.chunks,{type:type}));
     };
     try{ media.recorder.stop(); }catch(e){ media.recording=false; resolve(null); }
   });
@@ -524,264 +580,290 @@ function recStop(){
 /* =========================================================
    プロトコル展開
    ========================================================= */
-function pareticLabel(){ return meta.paretic === 'R' ? '麻痺側（右）' : '麻痺側（左）'; }
-function nonPareticLabel(){ return meta.paretic === 'R' ? '非麻痺側（左）' : '非麻痺側（右）'; }
-function pareticSign(){ return meta.paretic === 'R' ? 1 : -1; }   // 前額面: 右=+
+function pareticLabel(){ return meta.paretic==='R' ? '麻痺側（右）' : '麻痺側（左）'; }
+function nonPareticLabel(){ return meta.paretic==='R' ? '非麻痺側（左）' : '非麻痺側（右）'; }
+function pareticSign(){ return meta.paretic==='R' ? 1 : -1; }
+function shortLabel(s){ return s.replace('（右）','').replace('（左）',''); }
 
 function decodeStep(code, plane){
-  var deg = parseInt(code.substring(1), 10);
-  var kind = code.charAt(0), dirLabel, target, sideCode;
-  if (plane === 'frontal'){
-    if (kind === 'P'){ dirLabel = pareticLabel(); target = deg * pareticSign(); sideCode='paretic'; }
-    else             { dirLabel = nonPareticLabel(); target = -deg * pareticSign(); sideCode='non_paretic'; }
+  var deg=parseInt(code.substring(1),10), kind=code.charAt(0), dirLabel, target, sideCode;
+  if (plane==='frontal'){
+    if (kind==='P'){ dirLabel=pareticLabel(); target=deg*pareticSign(); sideCode='paretic'; }
+    else           { dirLabel=nonPareticLabel(); target=-deg*pareticSign(); sideCode='non_paretic'; }
   } else {
-    if (kind === 'F'){ dirLabel = '前方'; target = deg; sideCode='forward'; }
-    else             { dirLabel = '後方'; target = -deg; sideCode='backward'; }
+    if (kind==='F'){ dirLabel='前方'; target=deg; sideCode='forward'; }
+    else           { dirLabel='後方'; target=-deg; sideCode='backward'; }
   }
   return { code:code, plane:plane, axis:(plane==='frontal'?'roll':'pitch'),
            dirLabel:dirLabel, sideCode:sideCode, deg:deg, target:target };
 }
 
+function planeSteps(plane){
+  var out=[{ no:0, isMid:true, isBreak:false, plane:plane, axis:(plane==='frontal'?'roll':'pitch'),
+             dirLabel:'正中位', code:'MID', deg:0, target:0, sideCode:'midline' }];
+  var codes=PATTERNS[plane][meta.pattern];
+  for (var i=0;i<codes.length;i++){
+    var s=decodeStep(codes[i],plane); s.no=i+1; s.isMid=false; s.isBreak=false;
+    out.push(s);
+  }
+  return out;
+}
+
 function buildBlocks(){
-  var order = (meta.startEye === 'open')
-    ? [['open','frontal'],['open','sagittal'],['closed','frontal'],['closed','sagittal']]
-    : [['closed','frontal'],['closed','sagittal'],['open','frontal'],['open','sagittal']];
-  blocks = [];
-  for (var i=0;i<order.length;i++){
-    var eye = order[i][0], plane = order[i][1];
-    var codes = PATTERNS[plane][meta.pattern];
-    var steps = [{ no:0, isMid:true, plane:plane, axis:(plane==='frontal'?'roll':'pitch'),
-                   dirLabel:'正中位', code:'MID', deg:0, target:0, sideCode:'midline' }];
-    for (var j=0;j<codes.length;j++){
-      var s = decodeStep(codes[j], plane); s.no = j+1; s.isMid = false;
-      steps.push(s);
-    }
-    blocks.push({ idx:i, eye:eye, plane:plane, steps:steps, done:false });
+  var eyes = (meta.startEye==='open') ? ['open','closed'] : ['closed','open'];
+  blocks=[];
+  for (var i=0;i<eyes.length;i++){
+    var steps = planeSteps('frontal');
+    steps.push({ no:-1, isMid:false, isBreak:true, plane:'sagittal', axis:'pitch',
+                 dirLabel:'矢状面へ切り替え', code:'BREAK', deg:0, target:0, sideCode:'break' });
+    steps = steps.concat(planeSteps('sagittal'));
+    blocks.push({ idx:i, eye:eyes[i], steps:steps, done:false });
   }
 }
-function blockName(b){
-  return (b.eye==='open'?'開眼':'閉眼') + ' / ' + (b.plane==='frontal'?'前額面':'矢状面') + ' / パターン' + meta.pattern;
-}
+function blockName(b){ return (b.eye==='open'?'開眼':'閉眼')+' ブロック / パターン'+meta.pattern; }
+
 function renderBlocks(){
-  $('sessInfo').innerHTML = '被検者 <b>'+(meta.subjId||'--')+'</b>　'+ (meta.paretic==='R'?'麻痺側=右':'麻痺側=左') +
+  $('sessInfo').innerHTML='被検者 <b>'+(meta.subjId||'--')+'</b>　'+(meta.paretic==='R'?'麻痺側=右':'麻痺側=左')+
     '　測定方法 <b>'+meta.pattern+(meta.startEye==='open'?'o':'c')+'</b>';
-  var h = '';
+  var h='';
   for (var i=0;i<blocks.length;i++){
-    var b = blocks[i];
-    var cls = 'blockcard' + (b.done?' done':'') + (i===curBlockIdx?' cur':'');
-    h += '<div class="'+cls+'" data-i="'+i+'"><div class="bn">'+(i+1)+'</div><div class="bt">'+blockName(b)+
-         '</div><div class="badge'+(b.done?' on':'')+'">'+(b.done?'完了':'未実施')+'</div></div>';
+    var b=blocks[i];
+    var cls='blockcard'+(b.done?' done':'')+(i===curBlockIdx?' cur':'');
+    h+='<div class="'+cls+'" data-i="'+i+'"><div class="bn">'+(i+1)+'</div><div class="bt">'+blockName(b)+
+       '</div><div class="badge'+(b.done?' on':'')+'">'+(b.done?'完了':'未実施')+'</div></div>';
   }
-  $('blockList').innerHTML = h;
-  var cs = $('blockList').querySelectorAll('.blockcard');
-  for (var k=0;k<cs.length;k++){
-    cs[k].onclick = function(){ openBlock(parseInt(this.getAttribute('data-i'),10)); };
-  }
+  $('blockList').innerHTML=h;
+  var cs=$('blockList').querySelectorAll('.blockcard');
+  for (var k=0;k<cs.length;k++) cs[k].onclick=function(){ openBlock(parseInt(this.getAttribute('data-i'),10)); };
 }
 
 /* =========================================================
    ブロック実行
    ========================================================= */
 function openBlock(i){
-  curBlockIdx = i;
-  blk = { b: blocks[i], si: 0, running:false, t0:0, step:null, results:[], laps:[] };
-  $('rBlockName').textContent = blockName(blocks[i]);
-  $('btnBlock').textContent = 'ブロック開始';
-  $('btnBlock').className = 'primary big';
-  $('btnNext').disabled = true; $('btnRedoStep').disabled = true; $('btnLap').disabled = true;
+  curBlockIdx=i;
+  blk={ b:blocks[i], si:0, running:false, t0:0, step:null, results:[], laps:[], phase:'idle' };
+  $('rBlockName').textContent=blockName(blocks[i]);
+  $('btnBlock').textContent='ブロック開始';
+  $('btnBlock').className='primary big';
+  $('btnLap').disabled=true; $('btnPrevStep').disabled=true; $('btnNextStep').disabled=true;
   renderSteps(); showInstr(); setPhase('idle');
   $('rPeakA').textContent='0.0°'; $('rPeakV').textContent='0.0'; $('rPeakAcc').textContent='0.00';
+  $('rClock').textContent='0.0 s';
   show('scRun');
 }
-
 function curStep(){ return blk ? blk.b.steps[blk.si] : null; }
 
 function showInstr(){
-  var s = curStep(), b = blk.b;
+  var s=curStep(), b=blk.b;
   if (!s) return;
-  $('iNo').textContent = CIRC[s.no] || (s.no+1);
-  if (s.isMid){
-    $('iDir').textContent = '正中位';
-    $('iDeg').textContent = '';
+  $('iPlane').textContent = (s.plane==='frontal' ? '前額面' : '矢状面');
+  if (s.isBreak){
+    $('iNo').textContent='休憩';
+    $('iDir').textContent='矢状面へ切り替え';
+    $('iDeg').textContent='';
+  } else if (s.isMid){
+    $('iNo').textContent='基準';
+    $('iDir').textContent='正中位';
+    $('iDeg').textContent='';
   } else {
-    $('iDir').textContent = s.dirLabel + ' へ';
-    $('iDeg').textContent = s.deg + '°';
+    $('iNo').textContent=CIRC[s.no]||s.no;
+    $('iDir').textContent=s.dirLabel+' へ';
+    $('iDeg').textContent=s.deg+'°';
   }
-  var eyeEl = $('iEye');
-  eyeEl.textContent = (b.eye==='open' ? '開眼' : '閉眼');
-  eyeEl.className = 'eye ' + (b.eye==='open' ? 'open' : 'closed');
-  $('rTarget').textContent = s.isMid ? '0°' : ((s.target>0?'+':'')+s.target+'°');
-  $('rProgress').textContent = '工程 ' + (blk.si+1) + ' / ' + b.steps.length;
+  var e=$('iEye');
+  e.textContent=(b.eye==='open'?'開眼':'閉眼');
+  e.className='eye '+(b.eye==='open'?'open':'closed');
+  $('rTarget').textContent=(s.isMid||s.isBreak)?'0°':((s.target>0?'+':'')+s.target+'°');
+  $('angF').className='ang'+(s.plane==='frontal'?' act':'');
+  $('angS').className='ang'+(s.plane==='sagittal'?' act':'');
+  var tilt=0, tot=0;
+  for (var i=0;i<b.steps.length;i++){ if (!b.steps[i].isBreak && !b.steps[i].isMid){ tot++; if (i<=blk.si) tilt++; } }
+  $('rProgress').textContent=(s.plane==='frontal'?'前額面':'矢状面')+'　傾斜 '+
+    ((s.isMid||s.isBreak)?0:tilt)+' / '+tot;
 }
 
 function renderSteps(){
-  var h = '', b = blk.b;
+  var h='', b=blk.b, lastPlane='';
   for (var i=0;i<b.steps.length;i++){
-    var s = b.steps[i];
-    var r = blk.results[i];
-    var cls = 's' + (i===blk.si?' cur':'') + (r?' done':'');
-    var txt = s.isMid ? '正中位' : (s.dirLabel + ' ' + s.deg + '°');
+    var s=b.steps[i], r=blk.results[i];
+    if (s.plane!==lastPlane && !s.isBreak){
+      h+='<div class="hd">'+(s.plane==='frontal'?'■ 前額面':'■ 矢状面')+'</div>';
+      lastPlane=s.plane;
+    }
+    var cls='s'+(i===blk.si?' cur':'')+(r?' done':'');
+    var txt = s.isBreak ? '— 休憩・矢状面へ切り替え —' : (s.isMid ? '正中位' : (s.dirLabel+' '+s.deg+'°'));
+    var n = s.isBreak ? '－' : (s.isMid ? '基' : (CIRC[s.no]||s.no));
     var val = r ? (fx(r.peakAngle)+'° / '+fx(r.meanVel,1)+'dps') : '';
-    h += '<div class="'+cls+'"><div class="n">'+(CIRC[s.no]||s.no)+'</div><div class="t">'+txt+'</div><div class="v">'+val+'</div></div>';
+    h+='<div class="'+cls+'" data-i="'+i+'"><div class="n">'+n+'</div><div class="t">'+txt+'</div><div class="v">'+val+'</div></div>';
   }
-  $('stepList').innerHTML = h;
+  $('stepList').innerHTML=h;
+  var cur=$('stepList').querySelector('.s.cur');
+  if (cur){ try{ cur.scrollIntoView({block:'center'}); }catch(e){ try{ cur.scrollIntoView(false); }catch(e2){} } }
 }
 
 function setPhase(p){
   if (!blk) return;
-  blk.phase = p;
-  var m = { idle:'待機中', mid:'正中位を記録中', ready:'準備 — 傾け始めてください',
-            tilt:'傾斜中 — 速度を一定に', hold:'目標到達 — 保持', back:'戻し中', gap:'次の工程まで待機' };
-  $('rPhase').textContent = m[p] || p;
-  $('rPhase').style.background = (p==='hold') ? '#14361f' : (p==='tilt' ? '#0c2b3a' : (p==='mid' ? '#2a1f3a' : 'var(--panel2)'));
+  blk.phase=p;
+  var m={ idle:'待機中', mid:'正中位を記録中', ready:'準備 — 傾け始めてください',
+          tilt:'傾斜中 — 速度を一定に', hold:'目標到達 — 保持', gap:'次の工程まで待機', brk:'休憩中' };
+  $('rPhase').textContent=m[p]||p;
+  $('rPhase').style.background=(p==='hold')?'#14361f':(p==='tilt'?'#0c2b3a':((p==='mid'||p==='brk')?'#2a1f3a':'var(--panel2)'));
 }
 
 function startBlock(){
-  blk.running = true; blk.t0 = nowMs(); blk.si = 0; blk.results = []; blk.laps = [];
-  raw = [];
-  $('btnBlock').textContent = 'ブロック終了';
-  $('btnBlock').className = 'bad big';
-  $('btnNext').disabled = false; $('btnRedoStep').disabled = false; $('btnLap').disabled = false;
-  recStart();
-  beepSync();
+  blk.running=true; blk.t0=nowMs(); blk.si=0; blk.results=[]; blk.laps=[];
+  rawLines=[]; pendingEvent='';
+  $('btnBlock').textContent='ブロック終了';
+  $('btnBlock').className='bad big';
+  $('btnLap').disabled=false; $('btnPrevStep').disabled=false; $('btnNextStep').disabled=false;
+  recStart(); beepSync();
   beginStep();
 }
 
 function beginStep(){
-  var s = curStep();
+  var s=curStep();
   if (!s){ endBlock(); return; }
-  blk.step = { no:s.no, def:s, t0: nowMs()-blk.t0, tStart:null, tReach:null, tEnd:null,
-               peakAngle:0, peakVel:0, peakAcc:0, holdSum:0, holdN:0, backT:0, midT:null };
+  blk.step={ def:s, t0:nowMs()-blk.t0, tStart:null, tReach:null, tEnd:null,
+             peakAngle:0, peakVel:0, peakAcc:0, holdSum:0, holdN:0, backT:0, timerT:null };
   showInstr(); renderSteps();
-  if (s.isMid){ setPhase('mid'); blk.step.midT = nowMs(); markEvent('MID_START'); }
-  else { setPhase('ready'); markEvent('STEP_START'); }
+  if (s.isBreak){ setPhase('brk'); blk.step.timerT=nowMs(); pendingEvent='BREAK_START'; beepBreak(); }
+  else if (s.isMid){ setPhase('mid'); blk.step.timerT=nowMs(); pendingEvent='MID_START'; }
+  else { setPhase('ready'); pendingEvent='STEP_START'; }
 }
 
 function finishStep(){
-  var st = blk.step, s = st.def, t = nowMs()-blk.t0;
-  if (st.tEnd === null) st.tEnd = t;
-  var tiltDur = (st.tReach!==null && st.tStart!==null) ? (st.tReach-st.tStart)/1000 : null;
-  var meanVel = (tiltDur && tiltDur>0) ? st.peakAngle/tiltDur : null;
-  var holdDur = (st.tReach!==null) ? (st.tEnd-st.tReach)/1000 : null;
-  blk.results[blk.si] = {
-    step: s, peakAngle: st.peakAngle, peakVel: st.peakVel, peakAcc: st.peakAcc,
-    tiltDur: tiltDur, meanVel: meanVel, holdDur: holdDur,
-    holdMean: st.holdN>0 ? st.holdSum/st.holdN : null,
-    tStart: st.tStart, tReach: st.tReach, tEnd: st.tEnd, t0: st.t0
-  };
-  markEvent('STEP_END');
+  var st=blk.step, s=st.def, t=nowMs()-blk.t0;
+  if (st.tEnd===null) st.tEnd=t;
+  if (!s.isBreak){
+    var tiltDur=(st.tReach!==null&&st.tStart!==null)?(st.tReach-st.tStart)/1000:null;
+    blk.results[blk.si]={
+      step:s, peakAngle:st.peakAngle, peakVel:st.peakVel, peakAcc:st.peakAcc,
+      tiltDur:tiltDur, meanVel:(tiltDur&&tiltDur>0)?st.peakAngle/tiltDur:null,
+      holdDur:(st.tReach!==null)?(st.tEnd-st.tReach)/1000:null,
+      holdMean:st.holdN>0?st.holdSum/st.holdN:null,
+      tStart:st.tStart, tReach:st.tReach, tEnd:st.tEnd, t0:st.t0
+    };
+  }
+  pendingEvent='STEP_END';
   renderSteps();
   blk.si++;
-  if (blk.si >= blk.b.steps.length){ endBlock(); return; }
-  // インターバル
-  setPhase('gap');
-  showInstr();
-  var wait = Math.max(0, cfg.gapSec*1000);
-  blk.gapTimer = setTimeout(function(){ if (blk && blk.running) beginStep(); }, wait);
+  if (blk.si>=blk.b.steps.length){ endBlock(); return; }
+  setPhase('gap'); showInstr();
+  blk.gapTimer=setTimeout(function(){ if (blk&&blk.running) beginStep(); }, Math.max(0,cfg.gapSec*1000));
 }
 
 function endBlock(){
-  if (blk.gapTimer){ clearTimeout(blk.gapTimer); blk.gapTimer = null; }
-  blk.running = false;
-  beepEndBlock();
-  setPhase('idle');
-  $('btnBlock').textContent = 'ブロック開始';
-  $('btnBlock').className = 'primary big';
-  $('btnNext').disabled = true; $('btnRedoStep').disabled = true; $('btnLap').disabled = true;
+  if (blk.gapTimer){ clearTimeout(blk.gapTimer); blk.gapTimer=null; }
+  blk.running=false;
+  beepEndBlock(); setPhase('idle');
+  $('btnBlock').textContent='ブロック開始';
+  $('btnBlock').className='primary big';
+  $('btnLap').disabled=true; $('btnPrevStep').disabled=true; $('btnNextStep').disabled=true;
 
-  var b = blk.b, rawCopy = raw.slice(), resCopy = blk.results.slice(), lapCopy = blk.laps.slice();
+  var b=blk.b, resCopy=blk.results.slice(), lapCopy=blk.laps.slice(), lines=rawLines.slice();
   recStop().then(function(blob){
-    var vname = null;
-    if (blob && blob.size > 0){
-      var ext = (media.mime.indexOf('mp4')>=0) ? 'mp4' : 'webm';
-      vname = (meta.subjId||'sub')+'_B'+(b.idx+1)+'_'+(b.eye==='open'?'o':'c')+'_'+(b.plane==='frontal'?'FRO':'SAG')+'_'+meta.pattern+'.'+ext;
-      videoBlobs.push({ name:vname, blob:blob, url:URL.createObjectURL(blob) });
+    var vname=null;
+    if (blob&&blob.size>0){
+      vname=(meta.subjId||'sub')+'_'+(b.eye==='open'?'open':'closed')+'_'+meta.pattern+'.'+extFor(blob.type);
+      videoBlobs.push({name:vname, blob:blob, url:URL.createObjectURL(blob)});
     }
-    for (var i=0;i<resCopy.length;i++){
-      if (!resCopy[i]) continue;
-      allSteps.push({ block:b, result:resCopy[i], video:vname });
-    }
-    b.done = true;
-    b.rawCsv = toCsv([RAW_HEADER].concat(rawCopy));
-    b.laps = lapCopy;
-    var next = -1;
-    for (var k=0;k<blocks.length;k++) if (!blocks[k].done){ next = k; break; }
-    curBlockIdx = next;
-    renderBlocks();
+    for (var i=0;i<resCopy.length;i++){ if (resCopy[i]) allSteps.push({block:b, result:resCopy[i], video:vname}); }
+    b.done=true; b.rawCsv=RAW_HEADER.join(',')+'\r\n'+lines.join('\r\n'); b.laps=lapCopy; b.video=vname;
+    var next=-1;
+    for (var k=0;k<blocks.length;k++) if (!blocks[k].done){ next=k; break; }
+    curBlockIdx=next;
+    renderBlocks(); showQuickDl(b);
     show('scBlocks');
-    if (next < 0) setTimeout(function(){ if (confirm('全ブロックが完了しました。結果画面に移動しますか？')) goResults(); }, 300);
+    if (next<0) setTimeout(function(){ if (confirm('全ブロックが完了しました。結果画面に移動しますか？')) goResults(); }, 400);
   });
 }
 
+function showQuickDl(b){
+  var base=(meta.subjId||'sub')+'_'+(b.eye==='open'?'open':'closed')+'_'+meta.pattern+'_'+stamp();
+  var d='<a class="dl" href="'+blobUrl(b.rawCsv)+'" download="'+base+'_raw.csv">'+(b.eye==='open'?'開眼':'閉眼')+'ブロックの生波形 CSV</a>';
+  for (var i=0;i<videoBlobs.length;i++){
+    if (videoBlobs[i].name===b.video) d+='<a class="dl" href="'+videoBlobs[i].url+'" download="'+videoBlobs[i].name+'">'+(cfg.recMode==='video'?'動画':'音声')+': '+videoBlobs[i].name+'</a>';
+  }
+  $('quickDlLinks').innerHTML=d+'<div class="tiny">端末のメモリ節約のため、ブロックごとに保存しておくことを推奨します。</div>';
+  $('quickDl').style.display='block';
+}
+
 /* ---------- サンプル記録・自動判定 ---------- */
-var RAW_HEADER = ['t_ms','block','eye','plane','pattern','step_no','step_code','target_deg',
+var RAW_HEADER=['t_ms','block_no','eye','plane','pattern','step_no','step_code','target_deg',
   'angle_sagittal_deg','angle_frontal_deg','angle_sag_accOnly_deg','angle_fro_accOnly_deg',
   'angvel_sagittal_dps','angvel_frontal_dps','gyro_alpha_dps','gyro_beta_dps','gyro_gamma_dps',
   'linacc_x','linacc_y','linacc_z','linacc_resultant','grav_x','grav_y','grav_z','phase','event'];
 
-function markEvent(name){ if (raw.length) raw[raw.length-1][25] = name; }
-
 function onSample(t){
-  var rel = t - blk.t0, b = blk.b, st = blk.step;
-  var s = st ? st.def : null;
-  raw.push([ rel.toFixed(1), (b.idx+1), (b.eye==='open'?'open':'closed'),
-    (b.plane==='frontal'?'frontal':'sagittal'), meta.pattern,
-    s?s.no:'', s?s.code:'', s?s.target:'',
+  var rel=t-blk.t0, b=blk.b, st=blk.step, s=st?st.def:null;
+  var ev=pendingEvent; pendingEvent='';
+  rawLines.push([ rel.toFixed(1), (b.idx+1), (b.eye==='open'?'open':'closed'),
+    s?s.plane:'', meta.pattern,
+    s?(s.isBreak?'break':s.no):'', s?s.code:'', s?s.target:'',
     fx(dispPitch(),2), fx(dispRoll(),2),
     fx(sensor.pitchAcc*cfg.signP,2), fx(sensor.rollAcc*cfg.signR,2),
     fx(dispPitchRate(),2), fx(dispRollRate(),2),
     fx(sensor.rrRaw.a,2), fx(sensor.rrRaw.b,2), fx(sensor.rrRaw.g,2),
     fx(sensor.accRaw.x,3), fx(sensor.accRaw.y,3), fx(sensor.accRaw.z,3), fx(sensor.linAcc,3),
     fx(sensor.gLast.x,3), fx(sensor.gLast.y,3), fx(sensor.gLast.z,3),
-    blk.phase, '' ]);
+    blk.phase, ev ].join(','));
   updateStep(rel);
 }
 
-function activeAngle(){ var s=curStep(); if(!s) return 0; return s.axis==='pitch' ? dispPitch() : dispRoll(); }
-function activeRate(){  var s=curStep(); if(!s) return 0; return s.axis==='pitch' ? dispPitchRate() : dispRollRate(); }
+function activeAngle(){ var s=curStep(); if(!s) return 0; return s.axis==='pitch'?dispPitch():dispRoll(); }
+function activeRate(){  var s=curStep(); if(!s) return 0; return s.axis==='pitch'?dispPitchRate():dispRollRate(); }
 
 function updateStep(rel){
-  var st = blk.step; if (!st) return;
-  var s = st.def, ang = activeAngle(), rate = Math.abs(activeRate());
-  if (sensor.linAcc > st.peakAcc) st.peakAcc = sensor.linAcc;
+  var st=blk.step; if (!st) return;
+  var s=st.def, ang=activeAngle(), rate=Math.abs(activeRate());
+  if (sensor.linAcc>st.peakAcc) st.peakAcc=sensor.linAcc;
 
+  if (s.isBreak){
+    if (st.timerT && (nowMs()-st.timerT)>cfg.breakSec*1000){ pendingEvent='BREAK_END'; finishStep(); }
+    return;
+  }
   if (s.isMid){
-    if (Math.abs(ang) > st.peakAngle) st.peakAngle = Math.abs(ang);
-    st.holdSum += ang; st.holdN++;
-    if (cfg.auto && st.midT && (nowMs() - st.midT) > cfg.midSec*1000){
-      st.tStart = st.t0; st.tReach = st.t0; markEvent('MID_END'); finishStep();
+    if (Math.abs(ang)>st.peakAngle) st.peakAngle=Math.abs(ang);
+    st.holdSum+=ang; st.holdN++;
+    if (st.timerT && (nowMs()-st.timerT)>cfg.midSec*1000){
+      st.tStart=st.t0; st.tReach=st.t0; pendingEvent='MID_END'; finishStep();
     }
     return;
   }
 
-  var sgn = s.target >= 0 ? 1 : -1;
-  var prog = ang * sgn;
-  if (prog > st.peakAngle) st.peakAngle = prog;
-  if (blk.phase === 'tilt' && rate > st.peakVel) st.peakVel = rate;
+  var sgn=s.target>=0?1:-1, prog=ang*sgn;
+  if (prog>st.peakAngle) st.peakAngle=prog;
+  if (blk.phase==='tilt' && rate>st.peakVel) st.peakVel=rate;
 
-  if (!cfg.auto) return;
-
-  if (blk.phase === 'ready'){
-    if (prog > 2.5){ setPhase('tilt'); st.tStart = rel; markEvent('TILT_START'); beepEvent(1000); }
-  } else if (blk.phase === 'tilt'){
-    if (prog >= s.deg - 2){ setPhase('hold'); st.tReach = rel; markEvent('TARGET_REACHED'); beepEvent(1400);
-      st.holdSum = 0; st.holdN = 0; }
-  } else if (blk.phase === 'hold'){
-    st.holdSum += ang; st.holdN++;
-    if (prog < 2.5){
-      if (!st.backT) st.backT = rel;
-      else if (rel - st.backT > 500){ st.tEnd = rel; markEvent('RETURN_END'); finishStep(); }
-    } else st.backT = 0;
+  if (blk.phase==='ready'){
+    if (prog>2.5){ setPhase('tilt'); st.tStart=rel; pendingEvent='TILT_START'; beepEvent(1000); }
+  } else if (blk.phase==='tilt'){
+    if (prog>=s.deg-2){ setPhase('hold'); st.tReach=rel; pendingEvent='TARGET_REACHED'; beepEvent(1400);
+      st.holdSum=0; st.holdN=0; }
+  } else if (blk.phase==='hold'){
+    st.holdSum+=ang; st.holdN++;
+    if (prog<2.5){
+      if (!st.backT) st.backT=rel;
+      else if (rel-st.backT>500){ st.tEnd=rel; pendingEvent='RETURN_END'; finishStep(); }
+    } else st.backT=0;
   }
 }
 
 function addLap(){
-  if (!blk || !blk.running) return;
-  var t = nowMs()-blk.t0;
-  var lab = 'LAP'+(blk.laps.length+1);
-  blk.laps.push({ t:t, label:lab, step:(curStep()?curStep().no:''), angle:activeAngle() });
-  markEvent(lab);
-  tone(1800,70,0.5);
+  if (!blk||!blk.running) return;
+  var lab='LAP'+(blk.laps.length+1);
+  blk.laps.push({t:nowMs()-blk.t0, label:lab, step:(curStep()?curStep().no:''), angle:activeAngle()});
+  pendingEvent=lab; tone(1800,70,0.5);
+}
+
+function jumpStep(delta){
+  if (!blk||!blk.running) return;
+  if (blk.gapTimer){ clearTimeout(blk.gapTimer); blk.gapTimer=null; }
+  var ni=blk.si+delta;
+  if (ni<0||ni>=blk.b.steps.length) return;
+  pendingEvent=(delta>0?'SKIP_FWD':'SKIP_BACK');
+  blk.si=ni; beginStep();
 }
 
 /* =========================================================
@@ -789,48 +871,52 @@ function addLap(){
    ========================================================= */
 function tick(){
   if ($('scCheck').classList.contains('on')){
-    $('chkPitch').innerHTML = fx(dispPitch())+'<span class="unit">°</span>';
-    $('chkRoll').innerHTML  = fx(dispRoll())+'<span class="unit">°</span>';
-    $('chkRate').textContent = fx(dispPitchRate())+' / '+fx(dispRollRate())+' deg/s';
-    $('chkAcc').textContent = fx(sensor.linAcc,2)+' m/s²';
-    $('chkHz').textContent = fx(sensor.hz,0)+' Hz';
+    $('chkPitch').innerHTML=fx(dispPitch())+'<span class="unit">°</span>';
+    $('chkRoll').innerHTML =fx(dispRoll())+'<span class="unit">°</span>';
+    $('chkRate').textContent=fx(dispPitchRate())+' / '+fx(dispRollRate())+' deg/s';
+    $('chkAcc').textContent=fx(sensor.linAcc,2)+' m/s²';
+    $('chkHz').textContent=fx(sensor.hz,0)+' Hz';
   }
   if ($('scRun').classList.contains('on') && blk){
-    var s = curStep();
-    var ang = s ? (s.axis==='pitch'?dispPitch():dispRoll()) : dispPitch();
-    var rate = s ? Math.abs(s.axis==='pitch'?dispPitchRate():dispRollRate()) : 0;
-    $('rAngle').innerHTML = fx(ang)+'<span class="unit">°</span>';
+    // 2平面 同時表示
+    $('vF').innerHTML=fx(dispRoll())+'<span class="unit">°</span>';
+    $('vS').innerHTML=fx(dispPitch())+'<span class="unit">°</span>';
+    $('sF').textContent=fx(dispRollRate())+' deg/s';
+    $('sS').textContent=fx(dispPitchRate())+' deg/s';
 
-    var span = 45;
-    var pos = Math.max(0, Math.min(100, (ang/span)*50+50));
-    $('gMark').style.left = pos+'%';
-    $('gMin').textContent = '-'+span+'°'; $('gMax').textContent = '+'+span+'°';
+    var s=curStep();
+    var ang=s?(s.axis==='pitch'?dispPitch():dispRoll()):dispRoll();
+    var rate=s?Math.abs(s.axis==='pitch'?dispPitchRate():dispRollRate()):0;
+
+    var span=45, pos=Math.max(0,Math.min(100,(ang/span)*50+50));
+    $('gMark').style.left=pos+'%';
     if (s){
-      var tp = (s.target/span)*50+50, tol = (2/span)*50;
-      $('gTgt').style.left = tp+'%';
-      $('gZone').style.left = (tp-tol)+'%'; $('gZone').style.width = (tol*2)+'%';
+      var tp=(s.target/span)*50+50, tol=(2/span)*50;
+      $('gTgt').style.left=tp+'%';
+      $('gZone').style.left=(tp-tol)+'%'; $('gZone').style.width=(tol*2)+'%';
     }
-    var vmax = cfg.velHi*2;
-    $('vMark').style.left = Math.max(0,Math.min(100, rate/vmax*100))+'%';
-    $('vZone').style.left = (cfg.velLo/vmax*100)+'%';
-    $('vZone').style.width = ((cfg.velHi-cfg.velLo)/vmax*100)+'%';
-    $('rVel').textContent = fx(rate)+' deg/s';
-    if (blk.phase === 'tilt'){
-      if (rate > cfg.velHi){ $('rVel').style.color='var(--bad)'; $('vMsg').textContent='速すぎます — もっとゆっくり'; beepWarn(); }
-      else if (rate < cfg.velLo){ $('rVel').style.color='var(--warn)'; $('vMsg').textContent='やや遅い'; }
+    var vmax=cfg.velHi*2;
+    $('vMark').style.left=Math.max(0,Math.min(100,rate/vmax*100))+'%';
+    $('vZone').style.left=(cfg.velLo/vmax*100)+'%';
+    $('vZone').style.width=((cfg.velHi-cfg.velLo)/vmax*100)+'%';
+    $('rVel').textContent=fx(rate)+' deg/s';
+    if (blk.phase==='tilt'){
+      if (rate>cfg.velHi){ $('rVel').style.color='var(--bad)'; $('vMsg').textContent='速すぎます — もっとゆっくり'; beepWarn(); }
+      else if (rate<cfg.velLo){ $('rVel').style.color='var(--warn)'; $('vMsg').textContent='やや遅い'; }
       else { $('rVel').style.color='var(--ok)'; $('vMsg').textContent='適正速度'; }
     } else $('rVel').style.color='var(--fg)';
 
     if (blk.running){
-      $('rClock').textContent = fx((nowMs()-blk.t0)/1000)+' s';
-      var st = blk.step;
+      $('rClock').textContent=fx((nowMs()-blk.t0)/1000)+' s';
+      var st=blk.step;
       if (st){
-        $('rPeakA').textContent = fx(st.peakAngle)+'°';
-        $('rPeakV').textContent = fx(st.peakVel);
-        $('rPeakAcc').textContent = fx(st.peakAcc,2);
-        if (blk.phase === 'mid' && st.midT){
-          var left = Math.max(0, cfg.midSec - (nowMs()-st.midT)/1000);
-          $('rPhase').textContent = '正中位を記録中 — 残り '+fx(left,1)+' 秒';
+        $('rPeakA').textContent=fx(st.peakAngle)+'°';
+        $('rPeakV').textContent=fx(st.peakVel);
+        $('rPeakAcc').textContent=fx(st.peakAcc,2);
+        if (st.timerT && (blk.phase==='mid'||blk.phase==='brk')){
+          var total=(blk.phase==='mid')?cfg.midSec:cfg.breakSec;
+          var left=Math.max(0,total-(nowMs()-st.timerT)/1000);
+          $('rPhase').textContent=(blk.phase==='mid'?'正中位を記録中 — 残り ':'休憩中 — 残り ')+fx(left,1)+' 秒';
         }
       }
     }
@@ -848,9 +934,9 @@ function toCsv(rows){
     for (var j=0;j<r.length;j++) l.push(esc(r[j])); out.push(l.join(',')); }
   return out.join('\r\n');
 }
-function blobUrl(text){ return URL.createObjectURL(new Blob(['﻿'+text], {type:'text/csv;charset=utf-8'})); }
+function blobUrl(text){ return URL.createObjectURL(new Blob(['﻿'+text],{type:'text/csv;charset=utf-8'})); }
 
-var SUM_HEADER = ['subject_id','examiner','paretic_side','session_start','method',
+var SUM_HEADER=['subject_id','examiner','paretic_side','session_start','method',
   'block_no','eye','plane','pattern','step_no','step_code','direction','target_deg',
   'peak_angle_deg','hold_mean_angle_deg','tilt_duration_s','mean_angvel_dps','peak_angvel_dps',
   'peak_linacc_ms2','hold_duration_s','t_step_start_ms','t_tilt_start_ms','t_reach_ms','t_end_ms',
@@ -859,10 +945,10 @@ var SUM_HEADER = ['subject_id','examiner','paretic_side','session_start','method
 function buildSummary(){
   var rows=[SUM_HEADER];
   for (var i=0;i<allSteps.length;i++){
-    var a = allSteps[i], b = a.block, r = a.result, s = r.step;
+    var a=allSteps[i], b=a.block, r=a.result, s=r.step;
     rows.push([ meta.subjId, meta.examiner, meta.paretic, meta.started,
       meta.pattern+(meta.startEye==='open'?'o':'c'),
-      b.idx+1, (b.eye==='open'?'open':'closed'), b.plane, meta.pattern,
+      b.idx+1, (b.eye==='open'?'open':'closed'), s.plane, meta.pattern,
       s.no, s.code, s.dirLabel, s.target,
       fx(r.peakAngle,2), r.holdMean===null?'':fx(r.holdMean,2),
       r.tiltDur===null?'':fx(r.tiltDur,3), r.meanVel===null?'':fx(r.meanVel,3), fx(r.peakVel,3),
@@ -874,172 +960,180 @@ function buildSummary(){
 }
 
 function goResults(){
-  var h = '<tr><th>B</th><th>条件</th><th>#</th><th>方向</th><th>目標</th><th>最大角</th><th>平均速度</th><th>最大速度</th><th>最大加速</th></tr>';
+  var h='<tr><th>眼</th><th>平面</th><th>#</th><th>方向</th><th>目標</th><th>最大角</th><th>平均速度</th><th>最大速度</th><th>最大加速</th></tr>';
   for (var i=0;i<allSteps.length;i++){
     var a=allSteps[i], b=a.block, r=a.result, s=r.step;
-    h += '<tr><td>'+(b.idx+1)+'</td><td>'+(b.eye==='open'?'開':'閉')+(b.plane==='frontal'?'前額':'矢状')+'</td><td>'+s.no+'</td><td>'+
-      (s.isMid?'正中位':s.dirLabel)+'</td><td>'+(s.isMid?'0':s.target)+'°</td><td>'+fx(r.peakAngle)+'</td><td>'+
-      (r.meanVel===null?'--':fx(r.meanVel,2))+'</td><td>'+fx(r.peakVel,2)+'</td><td>'+fx(r.peakAcc,3)+'</td></tr>';
+    h+='<tr><td>'+(b.eye==='open'?'開':'閉')+'</td><td>'+(s.plane==='frontal'?'前額':'矢状')+'</td><td>'+
+      (s.isMid?'基':s.no)+'</td><td>'+(s.isMid?'正中位':shortLabel(s.dirLabel))+'</td><td>'+(s.isMid?'0':s.target)+'°</td><td>'+
+      fx(r.peakAngle)+'</td><td>'+(r.meanVel===null?'--':fx(r.meanVel,2))+'</td><td>'+fx(r.peakVel,2)+'</td><td>'+fx(r.peakAcc,3)+'</td></tr>';
   }
-  $('resTable').innerHTML = h;
+  $('resTable').innerHTML=h;
 
-  var base = (meta.subjId||'sub')+'_'+meta.pattern+(meta.startEye==='open'?'o':'c')+'_'+stamp();
-  var d = '<a class="dl" href="'+blobUrl(buildSummary())+'" download="'+base+'_summary.csv">工程サマリー CSV</a>';
-  var allRaw = [RAW_HEADER];
+  var base=(meta.subjId||'sub')+'_'+meta.pattern+(meta.startEye==='open'?'o':'c')+'_'+stamp();
+  var d='<a class="dl" href="'+blobUrl(buildSummary())+'" download="'+base+'_summary.csv">工程サマリー CSV</a>';
   for (var j=0;j<blocks.length;j++){
     if (!blocks[j].rawCsv) continue;
-    var lines = blocks[j].rawCsv.split('\r\n');
-    for (var k=1;k<lines.length;k++){ if (lines[k]) allRaw.push(lines[k].split(',')); }
+    d+='<a class="dl" href="'+blobUrl(blocks[j].rawCsv)+'" download="'+base+'_'+(blocks[j].eye==='open'?'open':'closed')+'_raw.csv">生波形 CSV（'+(blocks[j].eye==='open'?'開眼':'閉眼')+'）</a>';
   }
-  d += '<a class="dl" href="'+blobUrl(toCsv(allRaw))+'" download="'+base+'_raw.csv">生波形 CSV（全ブロック）</a>';
   for (var v=0;v<videoBlobs.length;v++){
-    d += '<a class="dl" href="'+videoBlobs[v].url+'" download="'+videoBlobs[v].name+'">動画: '+videoBlobs[v].name+'</a>';
+    d+='<a class="dl" href="'+videoBlobs[v].url+'" download="'+videoBlobs[v].name+'">'+(cfg.recMode==='video'?'動画':'音声')+': '+videoBlobs[v].name+'</a>';
   }
-  $('dlLinks').innerHTML = d;
+  $('dlLinks').innerHTML=d;
   show('scResults');
 }
 
 /* =========================================================
    イベント配線
    ========================================================= */
-function pickGroup(containerId, key, cb){
-  var bs = $(containerId).querySelectorAll('button');
+function pickGroup(containerId,key,cb){
+  var bs=$(containerId).querySelectorAll('button');
   for (var i=0;i<bs.length;i++){
-    bs[i].onclick = function(){
-      var all = $(containerId).querySelectorAll('button');
+    bs[i].onclick=function(){
+      var all=$(containerId).querySelectorAll('button');
       for (var j=0;j<all.length;j++) all[j].classList.remove('sel');
       this.classList.add('sel');
-      meta[key] = this.getAttribute('data-v');
+      meta[key]=this.getAttribute('data-v');
       if (cb) cb();
     };
   }
 }
 function updateMethodInfo(){
-  if (!meta.pattern || !meta.startEye){ $('methodInfo').textContent='パターンとスタート条件を選んでください'; return; }
-  var m = meta.pattern + (meta.startEye==='open'?'o':'c');
-  var seqF = PATTERNS.frontal[meta.pattern], seqS = PATTERNS.sagittal[meta.pattern];
-  function fmt(arr, plane){
-    var o=[]; for (var i=0;i<arr.length;i++){ var s=decodeStep(arr[i],plane);
-      o.push(s.dirLabel.replace('（右）','').replace('（左）','')+s.deg); }
+  if (!meta.pattern||!meta.startEye){ $('methodInfo').textContent='パターンとスタート条件を選んでください'; return; }
+  var m=meta.pattern+(meta.startEye==='open'?'o':'c');
+  function fmt(arr,plane){
+    var o=[]; for (var i=0;i<arr.length;i++){ var s=decodeStep(arr[i],plane); o.push(shortLabel(s.dirLabel)+s.deg); }
     return o.join(' → ');
   }
-  var first = (meta.startEye==='open') ? '開眼' : '閉眼';
-  var second = (meta.startEye==='open') ? '閉眼' : '開眼';
-  $('methodInfo').innerHTML = '測定方法 <b>'+m+'</b><br>'+
-    first+'（前額面→矢状面）→ '+second+'（前額面→矢状面）の全4ブロック<br>'+
-    '<span class="tiny">前額面: '+fmt(seqF,'frontal')+'<br>矢状面: '+fmt(seqS,'sagittal')+'</span>';
+  var first=(meta.startEye==='open')?'開眼':'閉眼', second=(meta.startEye==='open')?'閉眼':'開眼';
+  $('methodInfo').innerHTML='測定方法 <b>'+m+'</b><br>'+
+    '① '+first+'ブロック → ② '+second+'ブロック（各ブロック内で前額面→矢状面）<br>'+
+    '<span class="tiny">前額面: '+fmt(PATTERNS.frontal[meta.pattern],'frontal')+
+    '<br>矢状面: '+fmt(PATTERNS.sagittal[meta.pattern],'sagittal')+'</span>';
 }
 pickGroup('patBtns','pattern',updateMethodInfo);
 pickGroup('eyeBtns','startEye',updateMethodInfo);
-$('pR').onclick = function(){ meta.paretic='R'; this.classList.add('sel'); $('pL').classList.remove('sel'); updateMethodInfo(); };
-$('pL').onclick = function(){ meta.paretic='L'; this.classList.add('sel'); $('pR').classList.remove('sel'); updateMethodInfo(); };
 
-$('btnStart').onclick = function(){
+/* 記録モード */
+(function(){
+  var REC_MSG = {
+    audio:'音声のみ：約0.5 MB/分（1ブロック約5 MB）。傾斜のタイミングはセンサーCSVに記録されるため、通常はこれで十分です。',
+    video:'動画＋音声：320×240・約0.25 Mbps（1ブロック約20 MB）。胸装着のため映るのは天井・検者側です。',
+    none:'記録なし：センサーCSVのみ。外部レコーダーを使う場合はブロック開始ビープで同期してください。'
+  };
+  var bs=$('recBtns').querySelectorAll('button');
+  for (var i=0;i<bs.length;i++){
+    bs[i].onclick=function(){
+      if (this.disabled) return;
+      var all=$('recBtns').querySelectorAll('button');
+      for (var j=0;j<all.length;j++) all[j].classList.remove('sel');
+      this.classList.add('sel');
+      cfg.recMode=this.getAttribute('data-v');
+      $('recInfo').textContent=REC_MSG[cfg.recMode];
+    };
+    if (bs[i].getAttribute('data-v')==='audio') bs[i].classList.add('sel');
+  }
+})();
+$('pR').onclick=function(){ meta.paretic='R'; this.classList.add('sel'); $('pL').classList.remove('sel'); updateMethodInfo(); };
+$('pL').onclick=function(){ meta.paretic='L'; this.classList.add('sel'); $('pR').classList.remove('sel'); updateMethodInfo(); };
+
+$('btnStart').onclick=function(){
   if (!meta.paretic){ alert('麻痺側を選んでください。'); return; }
   if (!meta.pattern){ alert('パターン（A〜D）を選んでください。'); return; }
   if (!meta.startEye){ alert('スタート条件（開眼／閉眼）を選んでください。'); return; }
-  cfg.video = $('optVideo').checked;
-  cfg.syncBeep = $('optSyncBeep').checked;
-  cfg.eventBeep = $('optEventBeep').checked;
-  cfg.auto = $('optAuto').checked;
-  cfg.velLo = parseFloat($('velLo').value) || 3;
-  cfg.velHi = parseFloat($('velHi').value) || 8;
-  cfg.midSec = parseFloat($('midSec').value) || 10;
-  cfg.gapSec = parseFloat($('gapSec').value) || 3;
-  meta.subjId = $('subjId').value.trim();
-  meta.examiner = $('examiner').value.trim();
-  meta.memo = $('memo').value;
-  meta.started = new Date().toISOString();
+  cfg.syncBeep=$('optSyncBeep').checked;
+  cfg.eventBeep=$('optEventBeep').checked;
+  cfg.velLo=parseFloat($('velLo').value)||3;
+  cfg.velHi=parseFloat($('velHi').value)||8;
+  cfg.midSec=parseFloat($('midSec').value)||10;
+  cfg.gapSec=parseFloat($('gapSec').value)||3;
+  cfg.breakSec=parseFloat($('breakSec').value)||20;
+  meta.subjId=$('subjId').value.trim();
+  meta.examiner=$('examiner').value.trim();
+  meta.memo=$('memo').value;
+  meta.started=new Date().toISOString();
 
   initAudio(); keepAwake();
-  var btn = this; btn.disabled = true; btn.textContent = '許可を確認中...';
+  var btn=this; btn.disabled=true; btn.textContent='許可を確認中...';
   startSensors().then(function(){
-    return openCamera().catch(function(e){
-      alert('カメラ／マイクを利用できませんでした（'+e.name+'）。録画なしで続行します。');
-      cfg.video = false; return null;
+    return openMedia().catch(function(e){
+      alert('マイク'+(cfg.recMode==='video'?'／カメラ':'')+'を利用できませんでした（'+e.name+'）。記録なしで続行します。');
+      cfg.recMode='none'; return null;
     });
   }).then(function(){
-    buildBlocks(); curBlockIdx = 0;
+    buildBlocks(); curBlockIdx=0;
     show('scCheck');
-    btn.disabled = false; btn.textContent='センサーを許可して次へ';
+    btn.disabled=false; btn.textContent='センサーを許可して次へ';
   }).catch(function(e){
-    alert(e.message || String(e));
-    btn.disabled = false; btn.textContent='センサーを許可して次へ';
+    alert(e.message||String(e));
+    btn.disabled=false; btn.textContent='センサーを許可して次へ';
   });
 };
 
-$('btnZeroCheck').onclick = function(){
-  var flipped = false;
-  if (sensor.gLast.y > 4){ sensor.gravFlip = -sensor.gravFlip; flipped = true; }
+$('btnZeroCheck').onclick=function(){
+  var flipped=false;
+  if (sensor.gLast.y>4){ sensor.gravFlip=-sensor.gravFlip; flipped=true; }
   setTimeout(function(){
-    var p = dispPitch(), r = dispRoll();
-    $('zeroInfo').innerHTML = (flipped?'重力の符号を自動反転しました。<br>':'重力の符号は正常です。<br>')+
+    var p=dispPitch(), r=dispRoll();
+    $('zeroInfo').innerHTML=(flipped?'重力の符号を自動反転しました。<br>':'重力の符号は正常です。<br>')+
       '装着オフセット（参考値・減算しません）: 矢状 <b>'+fx(p)+'°</b> / 前額 <b>'+fx(r)+'°</b><br>'+
-      ((Math.abs(p)>8||Math.abs(r)>8) ? '<span style="color:#f59e0b">オフセットが大きめです。ハーネスを調整してください。</span>' : '装着は良好です。');
-  }, 250);
+      ((Math.abs(p)>8||Math.abs(r)>8)?'<span style="color:#f59e0b">オフセットが大きめです。ハーネスを調整してください。</span>':'装着は良好です。');
+  },250);
 };
-$('btnFlipP').onclick = function(){ cfg.signP = -cfg.signP; $('signP').textContent = (cfg.signP>0?'+1':'-1'); };
-$('btnFlipR').onclick = function(){ cfg.signR = -cfg.signR; $('signR').textContent = (cfg.signR>0?'+1':'-1'); };
+$('btnFlipP').onclick=function(){ cfg.signP=-cfg.signP; $('signP').textContent=(cfg.signP>0?'+1':'-1'); };
+$('btnFlipR').onclick=function(){ cfg.signR=-cfg.signR; $('signR').textContent=(cfg.signR>0?'+1':'-1'); };
 
-$('btnGyroCal').onclick = function(){
-  var b = this; b.disabled = true; sensor.gyroOk = false;
-  sensor.cal = { corrP:0, corrR:0, nP:0, nR:0, prevP:sensor.pitchAcc, prevR:sensor.rollAcc };
-  $('gyroInfo').textContent = '較正中... 前後・左右にゆっくり傾けてください';
-  var left = 5;
-  var iv = setInterval(function(){
-    left--; b.textContent = '較正中... '+left+' 秒';
-    if (left <= 0){
+$('btnGyroCal').onclick=function(){
+  var b=this; b.disabled=true; sensor.gyroOk=false;
+  sensor.cal={corrP:0,corrR:0,nP:0,nR:0,prevP:sensor.pitchAcc,prevR:sensor.rollAcc};
+  $('gyroInfo').textContent='較正中... 前後・左右にゆっくり傾けてください';
+  var left=5;
+  var iv=setInterval(function(){
+    left--; b.textContent='較正中... '+left+' 秒';
+    if (left<=0){
       clearInterval(iv);
-      var c = sensor.cal; sensor.cal = null;
-      var okP = c.nP>20, okR = c.nR>20;
-      if (okP) sensor.gyroSignP = c.corrP>0 ? 1 : -1;
-      if (okR) sensor.gyroSignR = c.corrR>0 ? 1 : -1;
-      sensor.gyroOk = okP || okR;
-      $('gyroInfo').innerHTML = sensor.gyroOk
+      var c=sensor.cal; sensor.cal=null;
+      var okP=c.nP>20, okR=c.nR>20;
+      if (okP) sensor.gyroSignP=c.corrP>0?1:-1;
+      if (okR) sensor.gyroSignR=c.corrR>0?1:-1;
+      sensor.gyroOk=okP||okR;
+      $('gyroInfo').innerHTML=sensor.gyroOk
         ? '較正完了（相補フィルタ有効）。ジャイロ符号: 矢状 '+sensor.gyroSignP+' / 前額 '+sensor.gyroSignR+'<br>有効サンプル: '+c.nP+' / '+c.nR
         : '<span style="color:#f59e0b">動きが足りず判定できませんでした。加速度センサーのみで推定します（実用上は可）。</span>';
-      b.disabled = false; b.textContent = 'ジャイロ較正をやり直す';
+      b.disabled=false; b.textContent='ジャイロ較正をやり直す';
     }
-  }, 1000);
+  },1000);
 };
 
-$('btnToBlocks').onclick = function(){ renderBlocks(); show('scBlocks'); };
-$('btnToResults2').onclick = function(){
+$('btnToBlocks').onclick=function(){ renderBlocks(); show('scBlocks'); };
+$('btnToResults2').onclick=function(){
   if (!allSteps.length){ alert('記録されたデータがありません。'); return; }
   goResults();
 };
-$('btnBackBlocks').onclick = function(){ renderBlocks(); show('scBlocks'); };
+$('btnBackBlocks').onclick=function(){ renderBlocks(); show('scBlocks'); };
 
-$('btnBlock').onclick = function(){
+$('btnBlock').onclick=function(){
   if (!blk) return;
   if (blk.running){ if (confirm('このブロックを終了しますか？')) endBlock(); }
   else startBlock();
 };
-$('btnNext').onclick = function(){
-  if (!blk || !blk.running) return;
+$('btnLap').onclick=addLap;
+$('btnPrevStep').onclick=function(){ jumpStep(-1); };
+$('btnNextStep').onclick=function(){ jumpStep(1); };
+// 待機・休憩中は指示エリアをタップで即座に次へ
+$('instrBox').onclick=function(){
+  if (!blk||!blk.running) return;
   if (blk.gapTimer){ clearTimeout(blk.gapTimer); blk.gapTimer=null; beginStep(); return; }
-  var st = blk.step, rel = nowMs()-blk.t0;
-  if (st){ if (st.tStart===null) st.tStart = rel; if (st.tReach===null) st.tReach = rel; st.tEnd = rel; }
-  markEvent('MANUAL_NEXT');
-  finishStep();
+  if (blk.phase==='mid'||blk.phase==='brk'){ pendingEvent=(blk.phase==='mid'?'MID_END_MANUAL':'BREAK_END_MANUAL'); finishStep(); }
 };
-$('btnRedoStep').onclick = function(){
-  if (!blk || !blk.running) return;
-  if (!confirm('この工程をやり直しますか？（計測値は上書きされます）')) return;
-  if (blk.gapTimer){ clearTimeout(blk.gapTimer); blk.gapTimer=null; }
-  markEvent('REDO');
-  beginStep();
-};
-$('btnLap').onclick = addLap;
-$('btnAbort').onclick = function(){
-  if (!blk) { show('scBlocks'); return; }
+$('btnAbort').onclick=function(){
+  if (!blk){ show('scBlocks'); return; }
   if (blk.running && !confirm('このブロックを中止します。記録中のデータは破棄されます。よろしいですか？')) return;
   if (blk.gapTimer){ clearTimeout(blk.gapTimer); blk.gapTimer=null; }
-  blk.running = false;
-  recStop().then(function(){ raw = []; renderBlocks(); show('scBlocks'); });
+  blk.running=false;
+  recStop().then(function(){ rawLines=[]; renderBlocks(); show('scBlocks'); });
 };
 
-window.addEventListener('beforeunload', function(e){
+window.addEventListener('beforeunload',function(e){
   if (allSteps.length && !$('scResults').classList.contains('on')){ e.preventDefault(); e.returnValue=''; }
 });
 
