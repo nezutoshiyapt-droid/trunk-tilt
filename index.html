@@ -86,6 +86,17 @@
   .ang .vl{font-size:40px;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.05;letter-spacing:-2px}
   .ang .sb{font-size:11px;color:var(--sub);font-variant-numeric:tabular-nums}
 
+  /* ---- 測定の順番 ---- */
+  .seqwrap{margin-top:12px;border-top:1px solid var(--line);padding-top:9px}
+  .seqttl{font-size:13px;font-weight:800;color:var(--acc);margin-bottom:5px}
+  .seqhd{font-size:12px;font-weight:800;color:var(--sub);margin:7px 0 3px}
+  .seq{line-height:2.1}
+  .chip{display:inline-block;padding:4px 9px;border-radius:8px;background:var(--panel2);
+    border:1px solid var(--line);font-weight:700;font-size:15px;vertical-align:middle}
+  .chip.done{opacity:.4;border-color:var(--ok)}
+  .chip.cur{background:var(--acc);color:#04202c;border-color:var(--acc);font-size:24px;
+    padding:6px 13px;font-weight:900;box-shadow:0 0 0 3px rgba(56,189,248,.35)}
+  .arw{color:var(--sub);margin:0 2px;font-size:12px;vertical-align:middle}
   .steplist{max-height:240px;overflow-y:auto;-webkit-overflow-scrolling:touch}
   .steplist .hd{font-size:12px;font-weight:800;color:var(--acc);padding:6px 4px 3px}
   .steplist .s{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:7px;
@@ -109,7 +120,11 @@
 
 <!-- ========== 1. 設定 ========== -->
 <div id="scSetup" class="screen on">
-  <h1>体幹傾斜測定アプリ</h1>
+  <h1>体幹傾斜測定アプリ <span style="font-size:12px;color:var(--sub);font-weight:400">v4</span></h1>
+  <div class="banner info" style="font-weight:400">
+    <b>バージョン v4</b>（2026-08-09）／ 順番表示・録音継続の修正版<br>
+    <span class="tiny">この表示が v4 でなければ、GitHubのファイルが古いままです。Safariを再読み込み（アドレスバーを下に引っぱる）してください。</span>
+  </div>
   <div id="compat"></div>
 
   <div class="card">
@@ -240,13 +255,6 @@
     </div>
   </div>
 
-  <div class="instr" id="instrBox">
-    <div><span class="no" id="iNo">－</span><span class="plane" id="iPlane">前額面</span></div>
-    <div class="dir" id="iDir">ブロック開始を押してください</div>
-    <div class="deg" id="iDeg"></div>
-    <div><span class="eye open" id="iEye">開眼</span></div>
-  </div>
-
   <div class="dual">
     <div class="ang" id="angF">
       <div class="lb">前額面（右＋／左−）</div>
@@ -269,24 +277,26 @@
     </div>
     <div class="gauge" style="height:20px"><div class="zone" id="vZone"></div><div class="mark" id="vMark" style="left:0%"></div></div>
     <div class="tiny" id="vMsg">ゆっくり一定の速度で</div>
-    <div class="row" style="margin-top:4px">
+
+    <div class="seqwrap">
+      <div class="seqttl">測定の順番</div>
+      <div id="seqBox"></div>
+    </div>
+
+    <button id="btnSkip" style="display:none;margin-top:8px">待ち時間をスキップして次へ</button>
+    <div class="row" style="margin-top:6px">
+      <button class="mini" id="btnPrevStep" disabled>◀ 1つ戻す（補正用）</button>
+      <button class="mini" id="btnNextStep" disabled>1つ進める（補正用）▶</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row">
       <div class="kv" style="flex:1"><span>最大角</span><b id="rPeakA">0.0°</b></div>
       <div class="kv" style="flex:1"><span>最大速度</span><b id="rPeakV">0.0</b></div>
       <div class="kv" style="flex:1"><span>最大加速度</span><b id="rPeakAcc">0.00</b></div>
     </div>
-  </div>
-
-  <div class="card">
-    <h2>実施順（このブロック）</h2>
-    <div class="steplist" id="stepList"></div>
-    <div class="row" style="margin-top:6px">
-      <button class="mini" id="btnPrevStep" disabled>◀ 工程を1つ戻す（補正用）</button>
-      <button class="mini" id="btnNextStep" disabled>工程を1つ進める（補正用）▶</button>
-    </div>
-  </div>
-
-  <div class="card">
-    <button class="primary big" id="btnBlock">ブロック開始</button>
+    <button class="primary big" id="btnBlock" style="margin-top:8px">ブロック開始</button>
     <button id="btnLap" disabled style="margin-top:7px">ラップ（任意の時点を記録）</button>
     <button id="btnAbort" style="margin-top:7px">ブロックを中止してブロック選択へ</button>
   </div>
@@ -511,8 +521,11 @@ function compatCheck(){
   if (!hasMR||!hasGUM){
     cfg.recMode='none';
     var rb=$('recBtns').querySelectorAll('button');
-    for (var k=0;k<rb.length;k++){ rb[k].disabled = (rb[k].getAttribute('data-v')!=='none'); rb[k].classList.remove('sel'); }
-    rb[rb.length-1].classList.add('sel');
+    for (var k=0;k<rb.length;k++){
+      var isNone = (rb[k].getAttribute('data-v')==='none');
+      rb[k].disabled = !isNone;
+      if (isNone) rb[k].classList.add('sel'); else rb[k].classList.remove('sel');
+    }
     $('recInfo').textContent='録音・録画が利用できないため「記録なし」に固定されています。';
   }
 }
@@ -647,68 +660,70 @@ function openBlock(i){
   $('btnBlock').textContent='ブロック開始';
   $('btnBlock').className='primary big';
   $('btnLap').disabled=true; $('btnPrevStep').disabled=true; $('btnNextStep').disabled=true;
-  renderSteps(); showInstr(); setPhase('idle');
+  showInstr(); setPhase('idle');
   $('rPeakA').textContent='0.0°'; $('rPeakV').textContent='0.0'; $('rPeakAcc').textContent='0.00';
   $('rClock').textContent='0.0 s';
   show('scRun');
 }
 function curStep(){ return blk ? blk.b.steps[blk.si] : null; }
 
+/* 「右15°」「前30°」のような短い表記 */
+function chipLabel(s){
+  if (s.plane==='frontal'){
+    var side = (s.sideCode==='paretic')
+      ? (meta.paretic==='R'?'右':'左')
+      : (meta.paretic==='R'?'左':'右');
+    return side + s.deg + '°';
+  }
+  return (s.sideCode==='forward'?'前':'後') + s.deg + '°';
+}
+
 function showInstr(){
   var s=curStep(), b=blk.b;
   if (!s) return;
-  $('iPlane').textContent = (s.plane==='frontal' ? '前額面' : '矢状面');
-  if (s.isBreak){
-    $('iNo').textContent='休憩';
-    $('iDir').textContent='矢状面へ切り替え';
-    $('iDeg').textContent='';
-  } else if (s.isMid){
-    $('iNo').textContent='基準';
-    $('iDir').textContent='正中位';
-    $('iDeg').textContent='';
-  } else {
-    $('iNo').textContent=CIRC[s.no]||s.no;
-    $('iDir').textContent=s.dirLabel+' へ';
-    $('iDeg').textContent=s.deg+'°';
-  }
-  var e=$('iEye');
-  e.textContent=(b.eye==='open'?'開眼':'閉眼');
-  e.className='eye '+(b.eye==='open'?'open':'closed');
   $('rTarget').textContent=(s.isMid||s.isBreak)?'0°':((s.target>0?'+':'')+s.target+'°');
   $('angF').className='ang'+(s.plane==='frontal'?' act':'');
   $('angS').className='ang'+(s.plane==='sagittal'?' act':'');
   var tilt=0, tot=0;
-  for (var i=0;i<b.steps.length;i++){ if (!b.steps[i].isBreak && !b.steps[i].isMid){ tot++; if (i<=blk.si) tilt++; } }
-  $('rProgress').textContent=(s.plane==='frontal'?'前額面':'矢状面')+'　傾斜 '+
-    ((s.isMid||s.isBreak)?0:tilt)+' / '+tot;
+  for (var i=0;i<b.steps.length;i++){
+    if (!b.steps[i].isBreak && !b.steps[i].isMid && b.steps[i].plane===s.plane){
+      tot++; if (i<blk.si) tilt++;
+    }
+  }
+  $('rProgress').textContent=(b.eye==='open'?'開眼':'閉眼')+'　'+
+    (s.plane==='frontal'?'前額面':'矢状面')+'　'+
+    ((s.isMid||s.isBreak)?'準備':(tilt+1))+' / '+tot;
+  renderSteps();
 }
 
 function renderSteps(){
-  var h='', b=blk.b, lastPlane='';
-  for (var i=0;i<b.steps.length;i++){
-    var s=b.steps[i], r=blk.results[i];
-    if (s.plane!==lastPlane && !s.isBreak){
-      h+='<div class="hd">'+(s.plane==='frontal'?'■ 前額面':'■ 矢状面')+'</div>';
-      lastPlane=s.plane;
+  var b=blk.b, h='';
+  var planes=['frontal','sagittal'];
+  for (var p=0;p<planes.length;p++){
+    var plane=planes[p], items=[];
+    for (var i=0;i<b.steps.length;i++){
+      var s=b.steps[i];
+      if (s.plane!==plane || s.isMid || s.isBreak) continue;
+      var cls='chip'+(i===blk.si?' cur':'')+(blk.results[i]?' done':'');
+      items.push('<span class="'+cls+'">'+chipLabel(s)+'</span>');
     }
-    var cls='s'+(i===blk.si?' cur':'')+(r?' done':'');
-    var txt = s.isBreak ? '— 休憩・矢状面へ切り替え —' : (s.isMid ? '正中位' : (s.dirLabel+' '+s.deg+'°'));
-    var n = s.isBreak ? '－' : (s.isMid ? '基' : (CIRC[s.no]||s.no));
-    var val = r ? (fx(r.peakAngle)+'° / '+fx(r.meanVel,1)+'dps') : '';
-    h+='<div class="'+cls+'" data-i="'+i+'"><div class="n">'+n+'</div><div class="t">'+txt+'</div><div class="v">'+val+'</div></div>';
+    var note='';
+    if (plane==='frontal') note=' <span style="font-weight:400;color:var(--sub)">（'+(meta.paretic==='R'?'右':'左')+'＝麻痺側）</span>';
+    h+='<div class="seqhd">'+(plane==='frontal'?'■ 前額面':'■ 矢状面')+note+'</div>'+
+       '<div class="seq">'+items.join('<span class="arw">→</span>')+'</div>';
   }
-  $('stepList').innerHTML=h;
-  var cur=$('stepList').querySelector('.s.cur');
-  if (cur){ try{ cur.scrollIntoView({block:'center'}); }catch(e){ try{ cur.scrollIntoView(false); }catch(e2){} } }
+  $('seqBox').innerHTML=h;
 }
 
 function setPhase(p){
   if (!blk) return;
   blk.phase=p;
-  var m={ idle:'待機中', mid:'正中位を記録中', ready:'準備 — 傾け始めてください',
-          tilt:'傾斜中 — 速度を一定に', hold:'目標到達 — 保持', gap:'次の工程まで待機', brk:'休憩中' };
+  var m={ idle:'待機中', mid:'静止して基準を記録中', ready:'次の角度へ傾けてください',
+          tilt:'傾斜中 — 速度を一定に', hold:'目標到達 — 保持', gap:'鉛直に戻して待機', brk:'休憩・矢状面へ切り替え' };
   $('rPhase').textContent=m[p]||p;
   $('rPhase').style.background=(p==='hold')?'#14361f':(p==='tilt'?'#0c2b3a':((p==='mid'||p==='brk')?'#2a1f3a':'var(--panel2)'));
+  var skip=$('btnSkip');
+  skip.style.display=(blk.running&&(p==='mid'||p==='brk'||p==='gap'))?'block':'none';
 }
 
 function startBlock(){
@@ -725,15 +740,18 @@ function beginStep(){
   var s=curStep();
   if (!s){ endBlock(); return; }
   blk.step={ def:s, t0:nowMs()-blk.t0, tStart:null, tReach:null, tEnd:null,
-             peakAngle:0, peakVel:0, peakAcc:0, holdSum:0, holdN:0, backT:0, timerT:null };
-  showInstr(); renderSteps();
+             peakAngle:0, peakVel:0, peakAcc:0, holdSum:0, holdN:0, backT:0, timerT:null, finished:false };
+  showInstr();
   if (s.isBreak){ setPhase('brk'); blk.step.timerT=nowMs(); pendingEvent='BREAK_START'; beepBreak(); }
   else if (s.isMid){ setPhase('mid'); blk.step.timerT=nowMs(); pendingEvent='MID_START'; }
   else { setPhase('ready'); pendingEvent='STEP_START'; }
 }
 
 function finishStep(){
-  var st=blk.step, s=st.def, t=nowMs()-blk.t0;
+  var st=blk.step;
+  if (!st || st.finished) return;      // 待機中の多重発火を防止
+  st.finished=true;
+  var s=st.def, t=nowMs()-blk.t0;
   if (st.tEnd===null) st.tEnd=t;
   if (!s.isBreak){
     var tiltDur=(st.tReach!==null&&st.tStart!==null)?(st.tReach-st.tStart)/1000:null;
@@ -746,10 +764,10 @@ function finishStep(){
     };
   }
   pendingEvent='STEP_END';
-  renderSteps();
   blk.si++;
   if (blk.si>=blk.b.steps.length){ endBlock(); return; }
   setPhase('gap'); showInstr();
+  if (blk.gapTimer) clearTimeout(blk.gapTimer);
   blk.gapTimer=setTimeout(function(){ if (blk&&blk.running) beginStep(); }, Math.max(0,cfg.gapSec*1000));
 }
 
@@ -815,18 +833,18 @@ function activeAngle(){ var s=curStep(); if(!s) return 0; return s.axis==='pitch
 function activeRate(){  var s=curStep(); if(!s) return 0; return s.axis==='pitch'?dispPitchRate():dispRollRate(); }
 
 function updateStep(rel){
-  var st=blk.step; if (!st) return;
+  var st=blk.step; if (!st || st.finished) return;
   var s=st.def, ang=activeAngle(), rate=Math.abs(activeRate());
   if (sensor.linAcc>st.peakAcc) st.peakAcc=sensor.linAcc;
 
   if (s.isBreak){
-    if (st.timerT && (nowMs()-st.timerT)>cfg.breakSec*1000){ pendingEvent='BREAK_END'; finishStep(); }
+    if (st.timerT!==null && (nowMs()-st.timerT)>cfg.breakSec*1000){ pendingEvent='BREAK_END'; finishStep(); }
     return;
   }
   if (s.isMid){
     if (Math.abs(ang)>st.peakAngle) st.peakAngle=Math.abs(ang);
     st.holdSum+=ang; st.holdN++;
-    if (st.timerT && (nowMs()-st.timerT)>cfg.midSec*1000){
+    if (st.timerT!==null && (nowMs()-st.timerT)>cfg.midSec*1000){
       st.tStart=st.t0; st.tReach=st.t0; pendingEvent='MID_END'; finishStep();
     }
     return;
@@ -913,10 +931,10 @@ function tick(){
         $('rPeakA').textContent=fx(st.peakAngle)+'°';
         $('rPeakV').textContent=fx(st.peakVel);
         $('rPeakAcc').textContent=fx(st.peakAcc,2);
-        if (st.timerT && (blk.phase==='mid'||blk.phase==='brk')){
+        if (st.timerT!==null && (blk.phase==='mid'||blk.phase==='brk')){
           var total=(blk.phase==='mid')?cfg.midSec:cfg.breakSec;
           var left=Math.max(0,total-(nowMs()-st.timerT)/1000);
-          $('rPhase').textContent=(blk.phase==='mid'?'正中位を記録中 — 残り ':'休憩中 — 残り ')+fx(left,1)+' 秒';
+          $('rPhase').textContent=(blk.phase==='mid'?'静止して基準を記録中 — 残り ':'休憩・矢状面へ切り替え — 残り ')+fx(left,1)+' 秒';
         }
       }
     }
@@ -1119,8 +1137,8 @@ $('btnBlock').onclick=function(){
 $('btnLap').onclick=addLap;
 $('btnPrevStep').onclick=function(){ jumpStep(-1); };
 $('btnNextStep').onclick=function(){ jumpStep(1); };
-// 待機・休憩中は指示エリアをタップで即座に次へ
-$('instrBox').onclick=function(){
+// 待機・休憩の残り時間をスキップ
+$('btnSkip').onclick=function(){
   if (!blk||!blk.running) return;
   if (blk.gapTimer){ clearTimeout(blk.gapTimer); blk.gapTimer=null; beginStep(); return; }
   if (blk.phase==='mid'||blk.phase==='brk'){ pendingEvent=(blk.phase==='mid'?'MID_END_MANUAL':'BREAK_END_MANUAL'); finishStep(); }
