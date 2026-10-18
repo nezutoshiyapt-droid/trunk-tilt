@@ -4,7 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="体幹傾斜">
 <meta name="theme-color" content="#0f1720">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icon-180.png">
 <title>体幹傾斜測定 (Trunk Tilt / FoF)</title>
 <style>
   :root{
@@ -120,11 +124,12 @@
 
 <!-- ========== 1. 設定 ========== -->
 <div id="scSetup" class="screen on">
-  <h1>体幹傾斜測定アプリ <span style="font-size:12px;color:var(--sub);font-weight:400">v4</span></h1>
+  <h1>体幹傾斜測定アプリ <span style="font-size:12px;color:var(--sub);font-weight:400">v6</span></h1>
   <div class="banner info" style="font-weight:400">
-    <b>バージョン v4</b>（2026-08-09）／ 順番表示・録音継続の修正版<br>
-    <span class="tiny">この表示が v4 でなければ、GitHubのファイルが古いままです。Safariを再読み込み（アドレスバーを下に引っぱる）してください。</span>
+    <b>バージョン v6</b>（2026-08-11）／ 加速度表示の平滑化<br>
+    <span class="tiny">この表示が v6 でなければ古いファイルです。Safariを下に引っぱって再読み込みしてください。</span>
   </div>
+  <div id="offlineState" class="banner warn" style="font-weight:400">オフライン準備を確認中...</div>
   <div id="compat"></div>
 
   <div class="card">
@@ -200,8 +205,15 @@
       </div>
     </div>
     <div class="kv"><span>角速度（矢状／前額）</span><b id="chkRate">0.0 / 0.0 deg/s</b></div>
-    <div class="kv"><span>合成直線加速度</span><b id="chkAcc">0.00 m/s²</b></div>
+    <div class="kv"><span>合成直線加速度（平滑後）</span><b id="chkAcc">0.00 m/s²</b></div>
     <div class="kv"><span>サンプリング</span><b id="chkHz">-- Hz</b></div>
+  </div>
+
+  <div class="card">
+    <h2>STEP 0: センサーの健全性チェック</h2>
+    <div class="muted">端末を机の上に置くか、被検者に静かに座ってもらった状態で押してください。加速度センサーのノイズ量を2秒間測り、故障かどうかを判定します。</div>
+    <button id="btnNoise" style="margin-top:9px">静止ノイズを測る（2秒）</button>
+    <div id="noiseInfo" class="tiny" style="margin-top:8px">未測定</div>
   </div>
 
   <div class="card">
@@ -365,6 +377,7 @@ var sensor = {
   ok:false, pitch:0, roll:0, pitchAcc:0, rollAcc:0, pitchRate:0, rollRate:0, linAcc:0,
   gravFlip: IS_IOS ? 1 : -1, gyroOk:false, gyroSignP:1, gyroSignR:-1,
   lastT:0, n:0, hz:0, hzT:0, hzN:0,
+  linAccF:0, noiseBuf:[], noiseSD:0,
   gLast:{x:0,y:-9.8,z:0}, accRaw:{x:0,y:0,z:0}, rrRaw:{a:0,b:0,g:0}, cal:null
 };
 var media = { stream:null, recorder:null, chunks:[], mime:'', recording:false };
@@ -472,6 +485,12 @@ function onMotion(e){
   var acc = e.acceleration || {x:0,y:0,z:0};
   sensor.accRaw = {x:acc.x||0,y:acc.y||0,z:acc.z||0};
   sensor.linAcc = Math.sqrt(sensor.accRaw.x*sensor.accRaw.x+sensor.accRaw.y*sensor.accRaw.y+sensor.accRaw.z*sensor.accRaw.z);
+  // 表示用：時定数0.5秒の1次ローパス（センサーノイズ・呼吸・心拍の混入を抑える）
+  var aLP = dt/(0.5+dt);
+  sensor.linAccF = sensor.linAccF + aLP*(sensor.linAcc - sensor.linAccF);
+  // 静止ノイズ評価用：直近2秒のばらつき
+  sensor.noiseBuf.push(sensor.linAcc);
+  if (sensor.noiseBuf.length>120) sensor.noiseBuf.shift();
 
   var prevP=sensor.pitch, prevR=sensor.roll;
   if (sensor.gyroOk){
@@ -496,6 +515,15 @@ function onMotion(e){
   }
 
   if (blk && blk.running) onSample(t);
+}
+
+function noiseSD(){
+  var b=sensor.noiseBuf, n=b.length;
+  if (n<20) return null;
+  var s=0,i; for (i=0;i<n;i++) s+=b[i];
+  var m=s/n, v=0;
+  for (i=0;i<n;i++){ var d=b[i]-m; v+=d*d; }
+  return Math.sqrt(v/n);
 }
 
 function dispPitch(){ return sensor.pitch*cfg.signP; }
@@ -740,7 +768,7 @@ function beginStep(){
   var s=curStep();
   if (!s){ endBlock(); return; }
   blk.step={ def:s, t0:nowMs()-blk.t0, tStart:null, tReach:null, tEnd:null,
-             peakAngle:0, peakVel:0, peakAcc:0, holdSum:0, holdN:0, backT:0, timerT:null, finished:false };
+             peakAngle:0, peakVel:0, peakAcc:0, peakAccF:0, holdSum:0, holdN:0, backT:0, timerT:null, finished:false };
   showInstr();
   if (s.isBreak){ setPhase('brk'); blk.step.timerT=nowMs(); pendingEvent='BREAK_START'; beepBreak(); }
   else if (s.isMid){ setPhase('mid'); blk.step.timerT=nowMs(); pendingEvent='MID_START'; }
@@ -756,7 +784,7 @@ function finishStep(){
   if (!s.isBreak){
     var tiltDur=(st.tReach!==null&&st.tStart!==null)?(st.tReach-st.tStart)/1000:null;
     blk.results[blk.si]={
-      step:s, peakAngle:st.peakAngle, peakVel:st.peakVel, peakAcc:st.peakAcc,
+      step:s, peakAngle:st.peakAngle, peakVel:st.peakVel, peakAcc:st.peakAcc, peakAccF:st.peakAccF,
       tiltDur:tiltDur, meanVel:(tiltDur&&tiltDur>0)?st.peakAngle/tiltDur:null,
       holdDur:(st.tReach!==null)?(st.tEnd-st.tReach)/1000:null,
       holdMean:st.holdN>0?st.holdSum/st.holdN:null,
@@ -811,7 +839,8 @@ function showQuickDl(b){
 var RAW_HEADER=['t_ms','block_no','eye','plane','pattern','step_no','step_code','target_deg',
   'angle_sagittal_deg','angle_frontal_deg','angle_sag_accOnly_deg','angle_fro_accOnly_deg',
   'angvel_sagittal_dps','angvel_frontal_dps','gyro_alpha_dps','gyro_beta_dps','gyro_gamma_dps',
-  'linacc_x','linacc_y','linacc_z','linacc_resultant','grav_x','grav_y','grav_z','phase','event'];
+  'linacc_x','linacc_y','linacc_z','linacc_resultant','linacc_resultant_lp05',
+  'grav_x','grav_y','grav_z','phase','event'];
 
 function onSample(t){
   var rel=t-blk.t0, b=blk.b, st=blk.step, s=st?st.def:null;
@@ -823,7 +852,7 @@ function onSample(t){
     fx(sensor.pitchAcc*cfg.signP,2), fx(sensor.rollAcc*cfg.signR,2),
     fx(dispPitchRate(),2), fx(dispRollRate(),2),
     fx(sensor.rrRaw.a,2), fx(sensor.rrRaw.b,2), fx(sensor.rrRaw.g,2),
-    fx(sensor.accRaw.x,3), fx(sensor.accRaw.y,3), fx(sensor.accRaw.z,3), fx(sensor.linAcc,3),
+    fx(sensor.accRaw.x,3), fx(sensor.accRaw.y,3), fx(sensor.accRaw.z,3), fx(sensor.linAcc,3), fx(sensor.linAccF,3),
     fx(sensor.gLast.x,3), fx(sensor.gLast.y,3), fx(sensor.gLast.z,3),
     blk.phase, ev ].join(','));
   updateStep(rel);
@@ -836,6 +865,7 @@ function updateStep(rel){
   var st=blk.step; if (!st || st.finished) return;
   var s=st.def, ang=activeAngle(), rate=Math.abs(activeRate());
   if (sensor.linAcc>st.peakAcc) st.peakAcc=sensor.linAcc;
+  if (sensor.linAccF>st.peakAccF) st.peakAccF=sensor.linAccF;
 
   if (s.isBreak){
     if (st.timerT!==null && (nowMs()-st.timerT)>cfg.breakSec*1000){ pendingEvent='BREAK_END'; finishStep(); }
@@ -887,20 +917,27 @@ function jumpStep(delta){
 /* =========================================================
    UI ループ
    ========================================================= */
+var lastUI=0;
 function tick(){
-  if ($('scCheck').classList.contains('on')){
+  // 数値は約8Hzでのみ更新（毎フレーム書き換えると下の桁がちらついて読めないため）
+  var nt=nowMs(), uiDue=(nt-lastUI)>120;
+  if (uiDue) lastUI=nt;
+
+  if ($('scCheck').classList.contains('on') && uiDue){
     $('chkPitch').innerHTML=fx(dispPitch())+'<span class="unit">°</span>';
     $('chkRoll').innerHTML =fx(dispRoll())+'<span class="unit">°</span>';
     $('chkRate').textContent=fx(dispPitchRate())+' / '+fx(dispRollRate())+' deg/s';
-    $('chkAcc').textContent=fx(sensor.linAcc,2)+' m/s²';
+    $('chkAcc').textContent=fx(sensor.linAccF,2)+' m/s²';
     $('chkHz').textContent=fx(sensor.hz,0)+' Hz';
   }
   if ($('scRun').classList.contains('on') && blk){
     // 2平面 同時表示
-    $('vF').innerHTML=fx(dispRoll())+'<span class="unit">°</span>';
-    $('vS').innerHTML=fx(dispPitch())+'<span class="unit">°</span>';
-    $('sF').textContent=fx(dispRollRate())+' deg/s';
-    $('sS').textContent=fx(dispPitchRate())+' deg/s';
+    if (uiDue){
+      $('vF').innerHTML=fx(dispRoll())+'<span class="unit">°</span>';
+      $('vS').innerHTML=fx(dispPitch())+'<span class="unit">°</span>';
+      $('sF').textContent=fx(dispRollRate())+' deg/s';
+      $('sS').textContent=fx(dispPitchRate())+' deg/s';
+    }
 
     var s=curStep();
     var ang=s?(s.axis==='pitch'?dispPitch():dispRoll()):dispRoll();
@@ -917,20 +954,20 @@ function tick(){
     $('vMark').style.left=Math.max(0,Math.min(100,rate/vmax*100))+'%';
     $('vZone').style.left=(cfg.velLo/vmax*100)+'%';
     $('vZone').style.width=((cfg.velHi-cfg.velLo)/vmax*100)+'%';
-    $('rVel').textContent=fx(rate)+' deg/s';
+    if (uiDue) $('rVel').textContent=fx(rate)+' deg/s';
     if (blk.phase==='tilt'){
       if (rate>cfg.velHi){ $('rVel').style.color='var(--bad)'; $('vMsg').textContent='速すぎます — もっとゆっくり'; beepWarn(); }
       else if (rate<cfg.velLo){ $('rVel').style.color='var(--warn)'; $('vMsg').textContent='やや遅い'; }
       else { $('rVel').style.color='var(--ok)'; $('vMsg').textContent='適正速度'; }
     } else $('rVel').style.color='var(--fg)';
 
-    if (blk.running){
+    if (blk.running && uiDue){
       $('rClock').textContent=fx((nowMs()-blk.t0)/1000)+' s';
       var st=blk.step;
       if (st){
         $('rPeakA').textContent=fx(st.peakAngle)+'°';
         $('rPeakV').textContent=fx(st.peakVel);
-        $('rPeakAcc').textContent=fx(st.peakAcc,2);
+        $('rPeakAcc').textContent=fx(st.peakAccF,2);
         if (st.timerT!==null && (blk.phase==='mid'||blk.phase==='brk')){
           var total=(blk.phase==='mid')?cfg.midSec:cfg.breakSec;
           var left=Math.max(0,total-(nowMs()-st.timerT)/1000);
@@ -957,7 +994,8 @@ function blobUrl(text){ return URL.createObjectURL(new Blob(['﻿'+text],{type:'
 var SUM_HEADER=['subject_id','examiner','paretic_side','session_start','method',
   'block_no','eye','plane','pattern','step_no','step_code','direction','target_deg',
   'peak_angle_deg','hold_mean_angle_deg','tilt_duration_s','mean_angvel_dps','peak_angvel_dps',
-  'peak_linacc_ms2','hold_duration_s','t_step_start_ms','t_tilt_start_ms','t_reach_ms','t_end_ms',
+  'peak_linacc_ms2','peak_linacc_lp05_ms2','noise_sd_ms2',
+  'hold_duration_s','t_step_start_ms','t_tilt_start_ms','t_reach_ms','t_end_ms',
   'video_file','sign_sagittal','sign_frontal','gyro_calibrated','sampling_hz','memo'];
 
 function buildSummary(){
@@ -970,7 +1008,8 @@ function buildSummary(){
       s.no, s.code, s.dirLabel, s.target,
       fx(r.peakAngle,2), r.holdMean===null?'':fx(r.holdMean,2),
       r.tiltDur===null?'':fx(r.tiltDur,3), r.meanVel===null?'':fx(r.meanVel,3), fx(r.peakVel,3),
-      fx(r.peakAcc,4), r.holdDur===null?'':fx(r.holdDur,3),
+      fx(r.peakAcc,4), fx(r.peakAccF,4), (meta.noiseSD===null||meta.noiseSD===undefined)?'':fx(meta.noiseSD,4),
+      r.holdDur===null?'':fx(r.holdDur,3),
       fx(r.t0,0), r.tStart===null?'':fx(r.tStart,0), r.tReach===null?'':fx(r.tReach,0), r.tEnd===null?'':fx(r.tEnd,0),
       a.video||'', cfg.signP, cfg.signR, sensor.gyroOk?'yes':'no', fx(sensor.hz,0), meta.memo ]);
   }
@@ -1097,6 +1136,27 @@ $('btnZeroCheck').onclick=function(){
       ((Math.abs(p)>8||Math.abs(r)>8)?'<span style="color:#f59e0b">オフセットが大きめです。ハーネスを調整してください。</span>':'装着は良好です。');
   },250);
 };
+$('btnNoise').onclick=function(){
+  var b=this; b.disabled=true;
+  sensor.noiseBuf=[];
+  var left=2;
+  var iv=setInterval(function(){
+    left--; b.textContent='測定中... '+left+' 秒';
+    if (left>0) return;
+    clearInterval(iv);
+    var sd=noiseSD();
+    meta.noiseSD=sd;
+    var judge, color;
+    if (sd===null){ judge='サンプルが足りません。センサーが動いているか確認してください。'; color='#f59e0b'; }
+    else if (sd<0.15){ judge='正常です。センサーの故障ではありません。'; color='#22c55e'; }
+    else if (sd<0.4){ judge='やや大きめ。端末が完全に静止していたか確認し、もう一度測ってみてください。'; color='#f59e0b'; }
+    else { judge='ノイズが大きすぎます。端末が動いていたか、ハーネスが緩んで振動している可能性があります。'; color='#ef4444'; }
+    $('noiseInfo').innerHTML='静止ノイズ（2秒の標準偏差）: <b>'+fx(sd,3)+' m/s²</b><br>'+
+      '<span style="color:'+color+'">'+judge+'</span><br>'+
+      '<span style="color:var(--sub)">スマホの加速度センサーは0.02〜0.1 m/s²程度のノイズを常に含みます。ゆっくり傾ける課題では本来の信号がこれと同程度になるため、表示は平滑化した値を使っています。</span>';
+    b.disabled=false; b.textContent='もう一度測る（2秒）';
+  },1000);
+};
 $('btnFlipP').onclick=function(){ cfg.signP=-cfg.signP; $('signP').textContent=(cfg.signP>0?'+1':'-1'); };
 $('btnFlipR').onclick=function(){ cfg.signR=-cfg.signR; $('signR').textContent=(cfg.signR>0?'+1':'-1'); };
 
@@ -1154,6 +1214,64 @@ $('btnAbort').onclick=function(){
 window.addEventListener('beforeunload',function(e){
   if (allSteps.length && !$('scResults').classList.contains('on')){ e.preventDefault(); e.returnValue=''; }
 });
+
+/* =========================================================
+   オフライン対応（Service Worker）
+   初回にオンラインで開くとアプリ一式が端末内に保存され、
+   以降は機内モード・圏外でも動作します。
+   ========================================================= */
+function setOfflineState(cls, html){
+  var el=$('offlineState');
+  el.className='banner '+cls;
+  el.innerHTML=html;
+}
+(function initOffline(){
+  var isFile = (location.protocol === 'file:');
+  if (isFile){
+    setOfflineState('err','<b>この開き方では動作しません</b><br>'+
+      '<span class="tiny">HTMLファイルを直接開くとiOSがセンサー・マイクを許可しません。配布されたURLをSafariで開いてください。</span>');
+    return;
+  }
+  if (!('serviceWorker' in navigator)){
+    setOfflineState('warn','<b>オフライン非対応の環境です</b><br>'+
+      '<span class="tiny">測定はできますが、実施時にネットワークが必要です。</span>');
+    return;
+  }
+  // ホーム画面から起動しているか（iOSはSafariとホーム画面アプリで保存先が別のことがある）
+  var standalone = (window.navigator.standalone === true) ||
+    !!(window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+  navigator.serviceWorker.register('./sw.js').then(function(reg){
+    function ask(){
+      var sw = navigator.serviceWorker.controller || reg.active;
+      if (sw && sw.postMessage) sw.postMessage({type:'CHECK'});
+      else setTimeout(ask, 1200);
+    }
+    navigator.serviceWorker.addEventListener('message', function(ev){
+      if (!ev.data || ev.data.type!=='CACHE_STATE') return;
+      var ver = ev.data.cache ? '<span class="tiny">（版: '+ev.data.cache+'）</span>' : '';
+      if (ev.data.ready && standalone){
+        setOfflineState('info','<b>オフライン準備 完了</b>　このホーム画面アプリは機内モード・圏外でも測定できます。'+ver);
+      } else if (ev.data.ready){
+        setOfflineState('info','<b>Safariでのオフライン準備 完了</b>'+ver+'<br>'+
+          '<span class="tiny">病棟で使うには、共有ボタン →「ホーム画面に追加」→ 追加したアイコンから<b>オンラインのまま一度</b>開き、'+
+          '「オフライン準備 完了」と出ることを確認してください（Safariとホーム画面アプリは保存先が別のことがあります）。</span>');
+      } else {
+        setOfflineState('warn','<b>オフライン保存中...</b><br><span class="tiny">数秒待ってから画面を再読み込みしてください。</span>');
+      }
+    });
+    setTimeout(ask, 600);
+    setTimeout(ask, 3000);
+  }).catch(function(e){
+    setOfflineState('warn','<b>オフライン保存に失敗しました</b>（'+(e && e.name ? e.name : 'error')+'）<br>'+
+      '<span class="tiny">測定は可能ですが、実施時にネットワークが必要です。</span>');
+  });
+  window.addEventListener('offline', function(){
+    var el=$('offlineState');
+    if (el.className.indexOf('info')>=0){
+      setOfflineState('info','<b>オフラインで動作中</b>　保存済みのアプリで測定できます。');
+    }
+  });
+})();
 
 compatCheck();
 requestAnimationFrame(tick);

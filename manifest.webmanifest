@@ -1,0 +1,16 @@
+{
+  "name": "体幹傾斜測定 (Trunk Tilt)",
+  "short_name": "体幹傾斜",
+  "description": "体幹傾斜角・角速度・加速度の計測と転倒恐怖感課題の進行支援",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f1720",
+  "theme_color": "#0f1720",
+  "lang": "ja",
+  "icons": [
+    { "src": "./icon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
