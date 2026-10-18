@@ -68,6 +68,12 @@
   .toggle input{width:23px;height:23px;flex:0 0 auto}
   .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  button.file{margin-top:7px;font-size:14px;font-weight:600;padding:11px 8px;border-color:var(--acc)}
+  .savemsg{font-size:12px;margin-top:6px;min-height:1em}
+  .savemsg.ok{color:var(--ok)} .savemsg.ng{color:var(--warn)}
+  .stored{border:1px solid var(--line);border-radius:10px;padding:9px;margin-bottom:8px}
+  .stored .st{font-size:14px;font-weight:700}
+  .stored .row button{flex:1;margin-top:7px;font-size:13px;padding:9px 4px}
 
   /* ---- 指示 ---- */
   .instr{background:linear-gradient(180deg,#1c2b3a,#16212c);border:2px solid var(--acc);
@@ -124,13 +130,19 @@
 
 <!-- ========== 1. 設定 ========== -->
 <div id="scSetup" class="screen on">
-  <h1>体幹傾斜測定アプリ <span style="font-size:12px;color:var(--sub);font-weight:400">v6</span></h1>
+  <h1>体幹傾斜測定アプリ <span style="font-size:12px;color:var(--sub);font-weight:400">v8</span></h1>
   <div class="banner info" style="font-weight:400">
-    <b>バージョン v6</b>（2026-08-11）／ 加速度表示の平滑化<br>
-    <span class="tiny">この表示が v6 でなければ古いファイルです。Safariを下に引っぱって再読み込みしてください。</span>
+    <b>バージョン v8</b>（2026-10-18）／ オフライン保存の強化<br>
+    <span class="tiny">データは共有メニューから保存し、端末内にも自動で控えを残します。この表示が v8 でなければ古い版です。オンラインで開き直してください。</span>
   </div>
   <div id="offlineState" class="banner warn" style="font-weight:400">オフライン準備を確認中...</div>
   <div id="compat"></div>
+
+  <div class="card" id="storedCard" style="display:none">
+    <h2>端末内に残っている測定データ</h2>
+    <div id="storedList"></div>
+    <div class="tiny" id="storedInfo"></div>
+  </div>
 
   <div class="card">
     <h2>被検者情報</h2>
@@ -323,11 +335,15 @@
     <div style="overflow-x:auto"><table id="resTable"></table></div>
   </div>
   <div class="card">
-    <h2>ダウンロード</h2>
+    <h2>データの保存</h2>
     <div id="dlLinks"></div>
-    <div class="tiny">CSVはExcelでそのまま開けます（BOM付きUTF-8）。動画はブロックごとに1ファイルです。</div>
+    <div class="tiny">共有メニューで「"ファイル"に保存」を選ぶと、iPhoneの「ファイル」アプリに保存されます。CSVはExcelでそのまま開けます（BOM付きUTF-8）。音声・動画はブロックごとに1ファイルです。</div>
   </div>
-  <div class="card"><button id="btnBackBlocks">ブロック選択に戻る</button></div>
+  <div class="card">
+    <button id="btnBackBlocks">ブロック選択に戻る</button>
+    <button class="ok" id="btnNextSubject" style="margin-top:8px">次の被検者へ（最初の画面に戻る）</button>
+    <div class="tiny" style="margin-top:6px">この被検者のデータは端末内にも残ります。不要になったら最初の画面の一覧から削除できます。</div>
+  </div>
 </div>
 
 <script>
@@ -580,6 +596,8 @@ function extFor(type){
 function openMedia(){
   return new Promise(function(resolve,reject){
     if (cfg.recMode==='none'||!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){ resolve(null); return; }
+    // 前の被検者のマイク／カメラを閉じてから開き直す
+    if (media.stream){ try{ media.stream.getTracks().forEach(function(t){ t.stop(); }); }catch(e){} media.stream=null; }
     var con = { audio:true };
     if (cfg.recMode==='video') con.video={facingMode:'user',width:{ideal:320},height:{ideal:240},frameRate:{ideal:15}};
     navigator.mediaDevices.getUserMedia(con).then(function(s){
@@ -821,17 +839,27 @@ function endBlock(){
     curBlockIdx=next;
     renderBlocks(); showQuickDl(b);
     show('scBlocks');
+    persistBlock(b);
     if (next<0) setTimeout(function(){ if (confirm('全ブロックが完了しました。結果画面に移動しますか？')) goResults(); }, 400);
   });
 }
 
 function showQuickDl(b){
+  var eyeJ=(b.eye==='open'?'開眼':'閉眼');
   var base=(meta.subjId||'sub')+'_'+(b.eye==='open'?'open':'closed')+'_'+meta.pattern+'_'+stamp();
-  var d='<a class="dl" href="'+blobUrl(b.rawCsv)+'" download="'+base+'_raw.csv">'+(b.eye==='open'?'開眼':'閉眼')+'ブロックの生波形 CSV</a>';
-  for (var i=0;i<videoBlobs.length;i++){
-    if (videoBlobs[i].name===b.video) d+='<a class="dl" href="'+videoBlobs[i].url+'" download="'+videoBlobs[i].name+'">'+(cfg.recMode==='video'?'動画':'音声')+': '+videoBlobs[i].name+'</a>';
-  }
-  $('quickDlLinks').innerHTML=d+'<div class="tiny">端末のメモリ節約のため、ブロックごとに保存しておくことを推奨します。</div>';
+  var items=[{name:base+'_raw.csv', blob:csvBlob(b.rawCsv), label:'生波形 CSV'}];
+  var m=findMedia(b.video);
+  if (m) items.push({name:m.name, blob:m.blob, label:mediaLabel()+'（'+m.name+'）'});
+  var el=$('quickDlLinks'), msg=mkMsg();
+  el.innerHTML='';
+  el.appendChild(mkSaveBtn('primary', eyeJ+'ブロックのデータを保存（'+(m?'CSV＋'+mediaLabel():'CSV')+'）', items, msg));
+  if (items.length>1) for (var i=0;i<items.length;i++) el.appendChild(mkSaveBtn('file','個別に保存: '+items[i].label,[items[i]],msg));
+  el.appendChild(msg);
+  var hint=document.createElement('div'); hint.className='tiny';
+  hint.textContent='共有メニューで「"ファイル"に保存」を選んでください。ブロックごとに保存しておくと安心です。';
+  el.appendChild(hint);
+  var am=document.createElement('div'); am.id='autoMsg'; am.className='savemsg'; am.textContent='端末内に控えを保存中...';
+  el.appendChild(am);
   $('quickDl').style.display='block';
 }
 
@@ -989,7 +1017,266 @@ function toCsv(rows){
     for (var j=0;j<r.length;j++) l.push(esc(r[j])); out.push(l.join(',')); }
   return out.join('\r\n');
 }
-function blobUrl(text){ return URL.createObjectURL(new Blob(['﻿'+text],{type:'text/csv;charset=utf-8'})); }
+function csvBlob(text){ return new Blob(['﻿'+text],{type:'text/csv;charset=utf-8'}); }
+function findMedia(name){
+  if (!name) return null;
+  for (var i=0;i<videoBlobs.length;i++) if (videoBlobs[i].name===name) return videoBlobs[i];
+  return null;
+}
+function mediaLabel(){ return (cfg.recMode==='video') ? '動画' : '音声'; }
+function escHtml(v){ return String(v===null||v===undefined?'':v).replace(/[&<>"']/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function isStandaloneApp(){
+  return (window.navigator.standalone===true) ||
+    !!(window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+}
+
+/* =========================================================
+   保存（共有メニュー経由）
+   iOSのホーム画面アプリでは <a download> で画面が止まることがあるため、
+   Web Share API（共有 →「"ファイル"に保存」）を優先する。
+   非対応の環境（PCなど）は従来どおりダウンロードする。
+   ========================================================= */
+function toFile(it){
+  try{ return new File([it.blob], it.name, {type:(it.blob.type||'application/octet-stream').split(';')[0]}); }
+  catch(e){ return null; }
+}
+function canShareFiles(files){
+  try{ return !!(navigator.share && navigator.canShare && navigator.canShare({files:files})); }
+  catch(e){ return false; }
+}
+function downloadItems(items){
+  for (var i=0;i<items.length;i++) (function(it,k){
+    setTimeout(function(){
+      var a=document.createElement('a');
+      a.href=URL.createObjectURL(it.blob); a.download=it.name; a.style.display='none';
+      document.body.appendChild(a); a.click();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); if (a.parentNode) a.parentNode.removeChild(a); }, 5000);
+    }, k*500);
+  })(items[i],i);
+}
+function saveItems(items, msgEl, onDone){
+  function say(cls,t){ if (msgEl){ msgEl.className='savemsg '+cls; msgEl.textContent=t; } }
+  var files=[], ok=true;
+  for (var i=0;i<items.length;i++){ var f=toFile(items[i]); if (!f){ ok=false; break; } files.push(f); }
+  if (ok && canShareFiles(files)){
+    navigator.share({files:files}).then(function(){
+      say('ok','✓ 共有メニューで処理しました（'+files.length+'件）。「ファイル」アプリで保存されたか確認してください。');
+      if (onDone) onDone();
+    }).catch(function(e){
+      if (e && e.name==='AbortError'){ say('ng','保存をキャンセルしました。もう一度押すとやり直せます。'); return; }
+      say('ng','共有メニューを開けませんでした（'+((e&&e.name)||'error')+'）。ダウンロードで保存します。');
+      downloadItems(items);
+    });
+    return;
+  }
+  downloadItems(items);
+  if (IS_IOS && isStandaloneApp()){
+    say('ng','ダウンロードで保存しました。画面が戻らなくなったらアプリを閉じて開き直してください（データは端末内に残っています）。');
+  } else {
+    say('ok','ダウンロードを開始しました（'+items.length+'件）。');
+  }
+  if (onDone) onDone();
+}
+function mkMsg(){ var m=document.createElement('div'); m.className='savemsg'; return m; }
+function mkSaveBtn(cls, label, items, msgEl, onDone){
+  var b=document.createElement('button'); b.className=cls; b.textContent=label;
+  b.onclick=function(){ saveItems(items, msgEl, onDone); };
+  return b;
+}
+
+/* =========================================================
+   端末内への自動保存（IndexedDB）
+   - ブロック終了ごとに、生波形CSV・音声・工程結果を端末内に控える
+   - アプリが落ちても、最初の画面の一覧から取り出して保存・続きの測定ができる
+   - 保存先は端末内のみ。外部には送信しない
+   ========================================================= */
+var Store=(function(){
+  var DBN='trunk-tilt-data', dbp=null;
+  function open(){
+    if (dbp) return dbp;
+    dbp=new Promise(function(res,rej){
+      if (!window.indexedDB){ rej(new Error('IndexedDB unavailable')); return; }
+      var r;
+      try{ r=indexedDB.open(DBN,1); }catch(e){ rej(e); return; }
+      r.onupgradeneeded=function(){
+        var db=r.result;
+        if (!db.objectStoreNames.contains('sessions')) db.createObjectStore('sessions',{keyPath:'id'});
+        if (!db.objectStoreNames.contains('blobs')) db.createObjectStore('blobs',{keyPath:'key'});
+      };
+      r.onsuccess=function(){ res(r.result); };
+      r.onerror=function(){ rej(r.error); };
+      r.onblocked=function(){ rej(new Error('blocked')); };
+    });
+    dbp.catch(function(){ dbp=null; });
+    return dbp;
+  }
+  function run(names, mode, fn){
+    return open().then(function(db){ return new Promise(function(res,rej){
+      var t=db.transaction(names,mode), out;
+      var r=fn(t);
+      if (r) r.onsuccess=function(){ out=r.result; };
+      t.oncomplete=function(){ res(out); };
+      t.onerror=function(){ rej(t.error); };
+      t.onabort=function(){ rej(t.error||new Error('abort')); };
+    }); });
+  }
+  return {
+    putSession:function(rec){ return run(['sessions'],'readwrite',function(t){ return t.objectStore('sessions').put(rec); }); },
+    listSessions:function(){ return run(['sessions'],'readonly',function(t){ return t.objectStore('sessions').getAll(); }); },
+    putBlob:function(rec){ return run(['blobs'],'readwrite',function(t){ return t.objectStore('blobs').put(rec); }); },
+    getBlob:function(key){ return run(['blobs'],'readonly',function(t){ return t.objectStore('blobs').get(key); }); },
+    deleteSession:function(rec){ return run(['sessions','blobs'],'readwrite',function(t){
+      var keys=rec.blobKeys||[];
+      for (var i=0;i<keys.length;i++) t.objectStore('blobs').delete(keys[i]);
+      t.objectStore('sessions').delete(rec.id);
+      return null;
+    }); }
+  };
+})();
+
+var sessBlobKeys=[], sessExportedAt=null;
+function blobToBuf(blob){
+  if (blob.arrayBuffer) return blob.arrayBuffer();
+  return new Promise(function(res,rej){
+    var fr=new FileReader(); fr.onload=function(){ res(fr.result); }; fr.onerror=function(){ rej(fr.error); };
+    fr.readAsArrayBuffer(blob);
+  });
+}
+function plain(o){ return JSON.parse(JSON.stringify(o)); }
+function sessionRecord(){
+  return {
+    id:meta.started, v:1, savedAt:new Date().toISOString(), exportedAt:sessExportedAt,
+    meta:plain(meta), cfg:plain(cfg),
+    sens:{ gyroOk:sensor.gyroOk, hz:sensor.hz, gyroSignP:sensor.gyroSignP, gyroSignR:sensor.gyroSignR, gravFlip:sensor.gravFlip },
+    blocks:blocks.map(function(x){ return { idx:x.idx, eye:x.eye, done:!!x.done, video:x.video||null, laps:x.laps||[] }; }),
+    steps:allSteps.map(function(a){ return { blockIdx:a.block.idx, result:plain(a.result), video:a.video||null }; }),
+    blobKeys:sessBlobKeys.slice()
+  };
+}
+function autoMsg(ok, e){
+  var el=$('autoMsg'); if (!el) return;
+  el.className='savemsg '+(ok?'ok':'ng');
+  el.textContent = ok
+    ? '✓ 端末内にも自動で控えを残しました。アプリが閉じても、最初の画面の一覧から取り出せます。'
+    : '⚠ 端末内への自動保存に失敗しました（'+((e&&e.name)||e||'error')+'）。必ず上のボタンで保存してください。';
+}
+function persistBlock(b){
+  if (!meta.started) return Promise.resolve(false);
+  sessExportedAt=null;   // 新しいブロックが増えたので「まとめて保存」は未済に戻す
+  var sid=meta.started, p=Promise.resolve();
+  function addKey(k){ if (sessBlobKeys.indexOf(k)<0) sessBlobKeys.push(k); }
+  var rk=sid+'|raw|'+b.idx;
+  p=p.then(function(){ return Store.putBlob({key:rk, sid:sid, type:'text/csv', data:b.rawCsv||''}); })
+     .then(function(){ addKey(rk); });
+  var m=findMedia(b.video);
+  if (m){
+    var mk=sid+'|media|'+m.name;
+    p=p.then(function(){ return blobToBuf(m.blob); })
+       .then(function(buf){ return Store.putBlob({key:mk, sid:sid, name:m.name, type:m.blob.type, data:buf}); })
+       .then(function(){ addKey(mk); });
+  }
+  return p.then(function(){ return Store.putSession(sessionRecord()); })
+    .then(function(){ autoMsg(true); return true; })
+    .catch(function(e){ autoMsg(false,e); return false; });
+}
+function markExported(){
+  sessExportedAt=new Date().toISOString();
+  if (meta.started && allSteps.length) Store.putSession(sessionRecord()).catch(function(){});
+}
+function resetSession(){
+  if (blk && blk.gapTimer) clearTimeout(blk.gapTimer);
+  blk=null; blocks=[]; allSteps=[]; rawLines=[]; curBlockIdx=-1;
+  for (var i=0;i<videoBlobs.length;i++){ try{ URL.revokeObjectURL(videoBlobs[i].url); }catch(e){} }
+  videoBlobs=[]; sessBlobKeys=[]; sessExportedAt=null;
+  $('quickDl').style.display='none'; $('quickDlLinks').innerHTML='';
+}
+function loadSession(rec){
+  resetSession();
+  var k;
+  for (k in rec.meta) meta[k]=rec.meta[k];
+  for (k in rec.cfg) cfg[k]=rec.cfg[k];
+  if (rec.sens){
+    sensor.gyroOk=!!rec.sens.gyroOk; sensor.hz=rec.sens.hz||0;
+    if (rec.sens.gyroSignP) sensor.gyroSignP=rec.sens.gyroSignP;
+    if (rec.sens.gyroSignR) sensor.gyroSignR=rec.sens.gyroSignR;
+    if (rec.sens.gravFlip) sensor.gravFlip=rec.sens.gravFlip;
+  }
+  sessBlobKeys=(rec.blobKeys||[]).slice(); sessExportedAt=rec.exportedAt||null;
+  buildBlocks();
+  for (var i=0;i<rec.blocks.length && i<blocks.length;i++){
+    blocks[i].done=!!rec.blocks[i].done; blocks[i].video=rec.blocks[i].video||null; blocks[i].laps=rec.blocks[i].laps||[];
+  }
+  allSteps=(rec.steps||[]).map(function(s){ return { block:blocks[s.blockIdx], result:s.result, video:s.video }; });
+  var jobs=[];
+  blocks.forEach(function(b){
+    if (b.done) jobs.push(Store.getBlob(rec.id+'|raw|'+b.idx).then(function(r){ b.rawCsv=r?r.data:''; }));
+    if (b.video) jobs.push(Store.getBlob(rec.id+'|media|'+b.video).then(function(r){
+      if (!r) return;
+      var bl=new Blob([r.data],{type:r.type||''});
+      videoBlobs.push({name:b.video, blob:bl, url:URL.createObjectURL(bl)});
+    }));
+  });
+  return Promise.all(jobs).then(function(){
+    curBlockIdx=-1;
+    for (var j=0;j<blocks.length;j++) if (!blocks[j].done){ curBlockIdx=j; break; }
+  });
+}
+function renderStored(){
+  Store.listSessions().then(function(list){
+    list=(list||[]).filter(function(r){ return r.blocks && r.blocks.some(function(x){ return x.done; }); });
+    list.sort(function(a,b){ return a.id<b.id?1:-1; });
+    var card=$('storedCard'), el=$('storedList');
+    if (!list.length){ card.style.display='none'; el.innerHTML=''; return; }
+    card.style.display='block'; el.innerHTML='';
+    list.forEach(function(r){
+      var done=r.blocks.filter(function(x){ return x.done; }).length, tot=r.blocks.length;
+      var d=new Date(r.id), when=isNaN(d.getTime())?r.id:(d.getMonth()+1)+'/'+d.getDate()+' '+pad(d.getHours())+':'+pad(d.getMinutes());
+      var box=document.createElement('div'); box.className='stored';
+      box.innerHTML='<div class="st">'+escHtml(r.meta.subjId||'（ID未入力）')+'　'+escHtml(r.meta.pattern+(r.meta.startEye==='open'?'o':'c'))+'　'+when+'</div>'+
+        '<div class="tiny">'+done+' / '+tot+' ブロック完了　'+
+        (r.exportedAt?'<span style="color:var(--ok)">まとめて保存済み</span>':'<span style="color:var(--warn)">まとめて保存はまだ</span>')+'</div>';
+      var row=document.createElement('div'); row.className='row';
+      var b1=document.createElement('button'); b1.className='primary'; b1.textContent='開いて保存';
+      b1.onclick=function(){ openStored(r,'results'); };
+      row.appendChild(b1);
+      if (done<tot){
+        var b2=document.createElement('button'); b2.textContent='続きを測定';
+        b2.onclick=function(){ openStored(r,'resume'); };
+        row.appendChild(b2);
+      }
+      var b3=document.createElement('button'); b3.className='mini'; b3.textContent='削除';
+      b3.onclick=function(){
+        if (!confirm((r.meta.subjId||'この')+' のデータを端末から削除します。「ファイル」アプリに保存済みか確認しましたか？')) return;
+        Store.deleteSession(r).then(renderStored).catch(function(e){ alert('削除できませんでした（'+((e&&e.name)||e)+'）'); });
+      };
+      row.appendChild(b3);
+      box.appendChild(row); el.appendChild(box);
+    });
+    if (navigator.storage && navigator.storage.estimate){
+      navigator.storage.estimate().then(function(est){
+        $('storedInfo').textContent='端末内の使用量: 約'+fx((est.usage||0)/1048576,1)+' MB。保存を確認したデータは削除して構いません。';
+      }).catch(function(){});
+    }
+  }).catch(function(){ $('storedCard').style.display='none'; });
+}
+function openStored(r, mode){
+  if (blk && blk.running){ alert('測定中は開けません。'); return; }
+  if (mode==='resume'){
+    // センサー許可はタップ直後に求める必要がある（iOS）
+    initAudio(); keepAwake();
+    var sensP=startSensors();
+    Promise.all([sensP, loadSession(r)]).then(function(){
+      return openMedia().catch(function(e){
+        alert('マイク'+(cfg.recMode==='video'?'／カメラ':'')+'を利用できませんでした（'+e.name+'）。記録なしで続行します。');
+        cfg.recMode='none'; return null;
+      });
+    }).then(function(){ show('scCheck'); })
+      .catch(function(e){ alert(e.message||String(e)); });
+    return;
+  }
+  loadSession(r).then(goResults).catch(function(e){ alert('データを読み込めませんでした（'+((e&&e.name)||e)+'）'); });
+}
 
 var SUM_HEADER=['subject_id','examiner','paretic_side','session_start','method',
   'block_no','eye','plane','pattern','step_no','step_code','direction','target_deg',
@@ -1027,15 +1314,20 @@ function goResults(){
   $('resTable').innerHTML=h;
 
   var base=(meta.subjId||'sub')+'_'+meta.pattern+(meta.startEye==='open'?'o':'c')+'_'+stamp();
-  var d='<a class="dl" href="'+blobUrl(buildSummary())+'" download="'+base+'_summary.csv">工程サマリー CSV</a>';
+  var items=[{name:base+'_summary.csv', blob:csvBlob(buildSummary()), label:'工程サマリー CSV'}];
   for (var j=0;j<blocks.length;j++){
     if (!blocks[j].rawCsv) continue;
-    d+='<a class="dl" href="'+blobUrl(blocks[j].rawCsv)+'" download="'+base+'_'+(blocks[j].eye==='open'?'open':'closed')+'_raw.csv">生波形 CSV（'+(blocks[j].eye==='open'?'開眼':'閉眼')+'）</a>';
+    items.push({name:base+'_'+(blocks[j].eye==='open'?'open':'closed')+'_raw.csv', blob:csvBlob(blocks[j].rawCsv),
+                label:'生波形 CSV（'+(blocks[j].eye==='open'?'開眼':'閉眼')+'）'});
   }
   for (var v=0;v<videoBlobs.length;v++){
-    d+='<a class="dl" href="'+videoBlobs[v].url+'" download="'+videoBlobs[v].name+'">'+(cfg.recMode==='video'?'動画':'音声')+': '+videoBlobs[v].name+'</a>';
+    items.push({name:videoBlobs[v].name, blob:videoBlobs[v].blob, label:mediaLabel()+'（'+videoBlobs[v].name+'）'});
   }
-  $('dlLinks').innerHTML=d;
+  var el=$('dlLinks'), msg=mkMsg();
+  el.innerHTML='';
+  el.appendChild(mkSaveBtn('primary big','すべて保存（'+items.length+'件）', items, msg, markExported));
+  for (var q=0;q<items.length;q++) el.appendChild(mkSaveBtn('file','個別に保存: '+items[q].label,[items[q]],msg));
+  el.appendChild(msg);
   show('scResults');
 }
 
@@ -1097,6 +1389,8 @@ $('btnStart').onclick=function(){
   if (!meta.paretic){ alert('麻痺側を選んでください。'); return; }
   if (!meta.pattern){ alert('パターン（A〜D）を選んでください。'); return; }
   if (!meta.startEye){ alert('スタート条件（開眼／閉眼）を選んでください。'); return; }
+  // 前の被検者のデータを持ち越さない（前のデータは端末内に自動保存済み）
+  resetSession(); meta.noiseSD=null;
   cfg.syncBeep=$('optSyncBeep').checked;
   cfg.eventBeep=$('optEventBeep').checked;
   cfg.velLo=parseFloat($('velLo').value)||3;
@@ -1187,7 +1481,20 @@ $('btnToResults2').onclick=function(){
   if (!allSteps.length){ alert('記録されたデータがありません。'); return; }
   goResults();
 };
-$('btnBackBlocks').onclick=function(){ renderBlocks(); show('scBlocks'); };
+$('btnBackBlocks').onclick=function(){
+  // 一覧から開いたデータ（センサー未起動）の場合は最初の画面へ
+  if (!sensor.ok){ resetSession(); show('scSetup'); renderStored(); return; }
+  renderBlocks(); show('scBlocks');
+};
+$('btnNextSubject').onclick=function(){
+  resetSession();
+  meta.subjId=''; meta.memo=''; meta.paretic=''; meta.pattern=''; meta.startEye=''; meta.started=''; meta.noiseSD=null;
+  $('subjId').value=''; $('memo').value='';
+  var sels=document.querySelectorAll('#scSetup button.sel');
+  for (var i=0;i<sels.length;i++){ if (!sels[i].closest('#recBtns')) sels[i].classList.remove('sel'); }
+  updateMethodInfo();
+  show('scSetup'); renderStored();
+};
 
 $('btnBlock').onclick=function(){
   if (!blk) return;
@@ -1274,6 +1581,9 @@ function setOfflineState(cls, html){
 })();
 
 compatCheck();
+renderStored();
+// 端末の空き容量が少ないときにiOSが保存データを消さないよう、永続化を依頼する
+if (navigator.storage && navigator.storage.persist){ try{ navigator.storage.persist().catch(function(){}); }catch(e){} }
 requestAnimationFrame(tick);
 </script>
 </body>

@@ -6,7 +6,7 @@
    - 電波が弱く応答が返らないときは NET_TIMEOUT_MS で見切り、保存済みの版で起動する
      （裏で通信は続け、届いたらキャッシュを最新に入れ替える）
 */
-var CACHE = 'trunk-tilt-v7';
+var CACHE = 'trunk-tilt-v8';
 var NET_TIMEOUT_MS = 4000;
 var ASSETS = [
   './',
