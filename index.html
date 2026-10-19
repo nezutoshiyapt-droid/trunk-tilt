@@ -130,10 +130,10 @@
 
 <!-- ========== 1. 設定 ========== -->
 <div id="scSetup" class="screen on">
-  <h1>体幹傾斜測定アプリ <span style="font-size:12px;color:var(--sub);font-weight:400">v8</span></h1>
+  <h1>体幹傾斜測定アプリ <span style="font-size:12px;color:var(--sub);font-weight:400">v9</span></h1>
   <div class="banner info" style="font-weight:400">
-    <b>バージョン v8</b>（2026-10-18）／ オフライン保存の強化<br>
-    <span class="tiny">データは共有メニューから保存し、端末内にも自動で控えを残します。この表示が v8 でなければ古い版です。オンラインで開き直してください。</span>
+    <b>バージョン v9</b>（2026-10-19）／ 傾斜速度 1.5〜2.5 deg/s・平均角速度の計算を修正<br>
+    <span class="tiny">保持カウント表示（音なし）とジャイロ較正の必須化を追加しました。この表示が v9 でなければ古い版です。オンラインで開き直してください。</span>
   </div>
   <div id="offlineState" class="banner warn" style="font-weight:400">オフライン準備を確認中...</div>
   <div id="compat"></div>
@@ -184,14 +184,17 @@
     <div class="toggle"><input type="checkbox" id="optEventBeep"><span>各傾斜の開始・到達時にもビープ（被検者への手がかりになるため既定OFF）</span></div>
     <label>目標角速度（deg/s）</label>
     <div class="row">
-      <div><input type="number" id="velLo" value="3" step="0.5"><div class="tiny">下限</div></div>
-      <div><input type="number" id="velHi" value="8" step="0.5"><div class="tiny">上限</div></div>
+      <div><input type="number" id="velLo" value="1.5" step="0.5"><div class="tiny">下限</div></div>
+      <div><input type="number" id="velHi" value="2.5" step="0.5"><div class="tiny">上限</div></div>
     </div>
+    <div class="tiny" style="margin-top:4px">既定は 1.5〜2.5 deg/s（目標 2 deg/s）。体幹の前額面・矢状面の回転知覚閾値（約2 deg/s）とSPV測定の標準速度（1.5 deg/s）にそろえています。範囲を外れても、1秒以上続いたときだけ警告音が鳴ります。</div>
     <div class="row">
       <div><label>正中位の記録（秒）</label><input type="number" id="midSec" value="10" step="1"></div>
       <div><label>工程間の間隔（秒）</label><input type="number" id="gapSec" value="3" step="1"></div>
     </div>
     <label>平面切り替えの休憩（秒）</label><input type="number" id="breakSec" value="20" step="5">
+    <label>到達後、NRSを聴取するまでの保持（秒）</label><input type="number" id="holdSec" value="5" step="1">
+    <div class="tiny">目標角に到達してからこの秒数が経つと、画面に「NRSを聴取してください」と表示します（音は鳴りません）。</div>
     <div class="tiny" style="margin-top:6px">※測定中は画面操作不要です。すべて自動で進みます。</div>
   </div>
 
@@ -246,7 +249,7 @@
   </div>
 
   <div class="card">
-    <h2>STEP 3: ジャイロ較正（推奨）</h2>
+    <h2>STEP 3: ジャイロ較正（必須）</h2>
     <div class="muted">押してから5秒間、前後・左右へゆっくり数回傾けてください。</div>
     <button id="btnGyroCal" style="margin-top:9px">ジャイロ較正を開始（5秒）</button>
     <div id="gyroInfo" class="tiny" style="margin-top:8px">未較正（加速度センサーのみで推定中）</div>
@@ -378,7 +381,9 @@ var PATTERNS = {
 };
 
 var cfg = { recMode:'audio', syncBeep:true, eventBeep:false,
-            velLo:3, velHi:8, midSec:10, gapSec:3, breakSec:20, signP:1, signR:-1 };
+            velLo:1.5, velHi:2.5, holdSec:5, midSec:10, gapSec:3, breakSec:20, signP:1, signR:-1 };
+var WARN_SUSTAIN_MS = 1000;   // 速度超過がこの時間続いたら警告音（短いぶれでは鳴らさない）
+var overSince = 0;
 var meta = { subjId:'', examiner:'', memo:'', paretic:'', pattern:'', startEye:'', started:'' };
 
 var blocks = [];
@@ -786,6 +791,7 @@ function beginStep(){
   var s=curStep();
   if (!s){ endBlock(); return; }
   blk.step={ def:s, t0:nowMs()-blk.t0, tStart:null, tReach:null, tEnd:null,
+             angStart:null, angReach:null, holdReady:false, tHoldReady:null,
              peakAngle:0, peakVel:0, peakAcc:0, peakAccF:0, holdSum:0, holdN:0, backT:0, timerT:null, finished:false };
   showInstr();
   if (s.isBreak){ setPhase('brk'); blk.step.timerT=nowMs(); pendingEvent='BREAK_START'; beepBreak(); }
@@ -801,9 +807,13 @@ function finishStep(){
   if (st.tEnd===null) st.tEnd=t;
   if (!s.isBreak){
     var tiltDur=(st.tReach!==null&&st.tStart!==null)?(st.tReach-st.tStart)/1000:null;
+    // 平均角速度 = 傾斜開始から到達までの「角度変化」÷「所要時間」（v8までは最大角÷所要時間で過大だった）
+    var dAng=(st.angReach!==null&&st.angStart!==null)?(st.angReach-st.angStart):null;
     blk.results[blk.si]={
       step:s, peakAngle:st.peakAngle, peakVel:st.peakVel, peakAcc:st.peakAcc, peakAccF:st.peakAccF,
-      tiltDur:tiltDur, meanVel:(tiltDur&&tiltDur>0)?st.peakAngle/tiltDur:null,
+      tiltDur:tiltDur, meanVel:(tiltDur&&tiltDur>0&&dAng!==null)?dAng/tiltDur:null,
+      angStart:st.angStart, angReach:st.angReach, tHoldReady:st.tHoldReady,
+      velLo:cfg.velLo, velHi:cfg.velHi, holdTarget:cfg.holdSec,
       holdDur:(st.tReach!==null)?(st.tEnd-st.tReach)/1000:null,
       holdMean:st.holdN>0?st.holdSum/st.holdN:null,
       tStart:st.tStart, tReach:st.tReach, tEnd:st.tEnd, t0:st.t0
@@ -913,12 +923,16 @@ function updateStep(rel){
   if (blk.phase==='tilt' && rate>st.peakVel) st.peakVel=rate;
 
   if (blk.phase==='ready'){
-    if (prog>2.5){ setPhase('tilt'); st.tStart=rel; pendingEvent='TILT_START'; beepEvent(1000); }
+    if (prog>2.5){ setPhase('tilt'); st.tStart=rel; st.angStart=prog; pendingEvent='TILT_START'; beepEvent(1000); }
   } else if (blk.phase==='tilt'){
-    if (prog>=s.deg-2){ setPhase('hold'); st.tReach=rel; pendingEvent='TARGET_REACHED'; beepEvent(1400);
+    if (prog>=s.deg-2){ setPhase('hold'); st.tReach=rel; st.angReach=prog; pendingEvent='TARGET_REACHED'; beepEvent(1400);
       st.holdSum=0; st.holdN=0; }
   } else if (blk.phase==='hold'){
     st.holdSum+=ang; st.holdN++;
+    // 保持時間に達したら記録（NRS聴取のタイミング。音は鳴らさない）
+    if (!st.holdReady && st.tReach!==null && rel-st.tReach>=cfg.holdSec*1000){
+      st.holdReady=true; st.tHoldReady=rel; pendingEvent='HOLD_READY';
+    }
     if (prog<2.5){
       if (!st.backT) st.backT=rel;
       else if (rel-st.backT>500){ st.tEnd=rel; pendingEvent='RETURN_END'; finishStep(); }
@@ -984,10 +998,28 @@ function tick(){
     $('vZone').style.width=((cfg.velHi-cfg.velLo)/vmax*100)+'%';
     if (uiDue) $('rVel').textContent=fx(rate)+' deg/s';
     if (blk.phase==='tilt'){
-      if (rate>cfg.velHi){ $('rVel').style.color='var(--bad)'; $('vMsg').textContent='速すぎます — もっとゆっくり'; beepWarn(); }
-      else if (rate<cfg.velLo){ $('rVel').style.color='var(--warn)'; $('vMsg').textContent='やや遅い'; }
-      else { $('rVel').style.color='var(--ok)'; $('vMsg').textContent='適正速度'; }
-    } else $('rVel').style.color='var(--fg)';
+      if (rate>cfg.velHi){
+        if (!overSince) overSince=nt;
+        $('rVel').style.color='var(--bad)'; $('vMsg').textContent='速すぎます — もっとゆっくり';
+        if (nt-overSince>=WARN_SUSTAIN_MS) beepWarn();   // 1秒以上続いたときだけ鳴らす
+      } else {
+        overSince=0;
+        if (rate<cfg.velLo){ $('rVel').style.color='var(--warn)'; $('vMsg').textContent='やや遅い'; }
+        else { $('rVel').style.color='var(--ok)'; $('vMsg').textContent='適正速度'; }
+      }
+    } else { overSince=0; $('rVel').style.color='var(--fg)'; }
+
+    // 保持のカウント表示（音なし）
+    if (uiDue && blk.running && blk.phase==='hold' && blk.step && blk.step.tReach!==null){
+      var held=(nt-blk.t0-blk.step.tReach)/1000;
+      if (held<cfg.holdSec){
+        $('rPhase').textContent='目標到達 — 保持 '+fx(held,1)+' / '+fx(cfg.holdSec,0)+' 秒';
+        $('rPhase').style.background='#14361f';
+      } else {
+        $('rPhase').textContent='NRSを聴取してください（保持 '+fx(held,1)+' 秒）';
+        $('rPhase').style.background='#5b3a06';
+      }
+    }
 
     if (blk.running && uiDue){
       $('rClock').textContent=fx((nowMs()-blk.t0)/1000)+' s';
@@ -1280,25 +1312,32 @@ function openStored(r, mode){
 
 var SUM_HEADER=['subject_id','examiner','paretic_side','session_start','method',
   'block_no','eye','plane','pattern','step_no','step_code','direction','target_deg',
-  'peak_angle_deg','hold_mean_angle_deg','tilt_duration_s','mean_angvel_dps','peak_angvel_dps',
+  'peak_angle_deg','hold_mean_angle_deg','tilt_duration_s','angle_tilt_start_deg','angle_reach_deg',
+  'mean_angvel_dps','peak_angvel_dps','vel_target_lo_dps','vel_target_hi_dps','mean_angvel_in_range',
   'peak_linacc_ms2','peak_linacc_lp05_ms2','noise_sd_ms2',
-  'hold_duration_s','t_step_start_ms','t_tilt_start_ms','t_reach_ms','t_end_ms',
-  'video_file','sign_sagittal','sign_frontal','gyro_calibrated','sampling_hz','memo'];
+  'hold_duration_s','hold_target_s','t_step_start_ms','t_tilt_start_ms','t_reach_ms','t_hold_ready_ms','t_end_ms',
+  'video_file','sign_sagittal','sign_frontal','gyro_calibrated','sampling_hz','app_version','memo'];
+var APP_VERSION='v9';
+function nz(v,n){ return (v===null||v===undefined)?'':fx(v,n); }
 
 function buildSummary(){
   var rows=[SUM_HEADER];
   for (var i=0;i<allSteps.length;i++){
     var a=allSteps[i], b=a.block, r=a.result, s=r.step;
+    var vLo=(r.velLo!==undefined)?r.velLo:cfg.velLo, vHi=(r.velHi!==undefined)?r.velHi:cfg.velHi;
+    var hTarget=(r.holdTarget!==undefined)?r.holdTarget:cfg.holdSec;
+    var inRange=(r.meanVel===null||r.meanVel===undefined||s.isMid)?'':((r.meanVel>=vLo&&r.meanVel<=vHi)?'yes':'no');
     rows.push([ meta.subjId, meta.examiner, meta.paretic, meta.started,
       meta.pattern+(meta.startEye==='open'?'o':'c'),
       b.idx+1, (b.eye==='open'?'open':'closed'), s.plane, meta.pattern,
       s.no, s.code, s.dirLabel, s.target,
-      fx(r.peakAngle,2), r.holdMean===null?'':fx(r.holdMean,2),
-      r.tiltDur===null?'':fx(r.tiltDur,3), r.meanVel===null?'':fx(r.meanVel,3), fx(r.peakVel,3),
-      fx(r.peakAcc,4), fx(r.peakAccF,4), (meta.noiseSD===null||meta.noiseSD===undefined)?'':fx(meta.noiseSD,4),
-      r.holdDur===null?'':fx(r.holdDur,3),
-      fx(r.t0,0), r.tStart===null?'':fx(r.tStart,0), r.tReach===null?'':fx(r.tReach,0), r.tEnd===null?'':fx(r.tEnd,0),
-      a.video||'', cfg.signP, cfg.signR, sensor.gyroOk?'yes':'no', fx(sensor.hz,0), meta.memo ]);
+      fx(r.peakAngle,2), nz(r.holdMean,2),
+      nz(r.tiltDur,3), nz(r.angStart,2), nz(r.angReach,2),
+      nz(r.meanVel,3), fx(r.peakVel,3), nz(vLo,1), nz(vHi,1), inRange,
+      fx(r.peakAcc,4), fx(r.peakAccF,4), nz(meta.noiseSD,4),
+      nz(r.holdDur,3), (s.isMid?'':nz(hTarget,1)),
+      fx(r.t0,0), nz(r.tStart,0), nz(r.tReach,0), nz(r.tHoldReady,0), nz(r.tEnd,0),
+      a.video||'', cfg.signP, cfg.signR, sensor.gyroOk?'yes':'no', fx(sensor.hz,0), APP_VERSION, meta.memo ]);
   }
   return toCsv(rows);
 }
@@ -1393,8 +1432,10 @@ $('btnStart').onclick=function(){
   resetSession(); meta.noiseSD=null;
   cfg.syncBeep=$('optSyncBeep').checked;
   cfg.eventBeep=$('optEventBeep').checked;
-  cfg.velLo=parseFloat($('velLo').value)||3;
-  cfg.velHi=parseFloat($('velHi').value)||8;
+  cfg.velLo=parseFloat($('velLo').value)||1.5;
+  cfg.velHi=parseFloat($('velHi').value)||2.5;
+  if (cfg.velHi<=cfg.velLo){ alert('目標角速度の上限は下限より大きくしてください。'); return; }
+  var hs=parseFloat($('holdSec').value); cfg.holdSec=isNaN(hs)?5:Math.max(0,hs);
   cfg.midSec=parseFloat($('midSec').value)||10;
   cfg.gapSec=parseFloat($('gapSec').value)||3;
   cfg.breakSec=parseFloat($('breakSec').value)||20;
@@ -1476,7 +1517,11 @@ $('btnGyroCal').onclick=function(){
   },1000);
 };
 
-$('btnToBlocks').onclick=function(){ renderBlocks(); show('scBlocks'); };
+$('btnToBlocks').onclick=function(){
+  // ゆっくりした傾斜（2 deg/s前後）では、較正なしだと角速度の表示が大きくぶれるため必須にする
+  if (!sensor.gyroOk && !confirm('ジャイロ較正（STEP 3）が完了していません。\n2 deg/s前後のゆっくりした傾斜では、較正しないと速度の表示が大きくぶれます。\n\n較正せずに進みますか？（非推奨）')) return;
+  renderBlocks(); show('scBlocks');
+};
 $('btnToResults2').onclick=function(){
   if (!allSteps.length){ alert('記録されたデータがありません。'); return; }
   goResults();
